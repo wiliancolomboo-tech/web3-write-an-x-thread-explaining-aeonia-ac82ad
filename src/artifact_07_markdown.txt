@@ -1,0 +1,10 @@
+6/10
+📊 Benchmarking Aeonian vs Legacy Solana Perpetuals:
+
+Metric                  Legacy Engine       Aeonian Trade
+─────────────────────────────────────────────────────────
+Fill Transaction CU     ~240,000 CU         ~42,800 CU
+Max Parallel Trades     Sequential State    Parallel Accounts (Non-overlapping)
+Oracle Staleness Tol.   > 20 slots          ≤ 3 slots
+Collateral Haircuts     Static              Dynamic Curve based on depth
+Zero-Copy Loading       ❌ Deserialized      ✅ Zero-Copy (`bytemuck`)

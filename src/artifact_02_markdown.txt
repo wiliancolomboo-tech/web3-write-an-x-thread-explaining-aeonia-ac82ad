@@ -1,0 +1,6 @@
+🧵 1/10
+Perpetuals on L1s are broken: toxic LVR, 300k+ Compute Unit transaction footprints, and oracle front-running.
+
+We built @AeonianTrade on @Solana to rethink decentralized derivatives from the bare metal up.
+
+Here is the complete technical breakdown of our architecture + our upcoming Livestream schedule 👇

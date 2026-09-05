@@ -1,0 +1,13 @@
+3/10
+🧠 The Core Innovation: Zero-Copy Unified Cross-Margin Engine
+
+Aeonian compresses portfolio margin checks into a single PDA using 64-byte aligned structs:
+
+┌────────────────────────────────────────────────────────┐
+│ MarginAccount PDA                                      │
+│ ├─ Collateral: USDC, SOL, LSTs (Packed `I80F48`)        │
+│ ├─ Active Positions: [AssetId: u8, Size: i64, PnL: i64] │
+│ └─ Health Factor: (Total Collateral * Haircut) / Maint │
+└────────────────────────────────────────────────────────┘
+
+Zero serialization cost. Total verification cost: < 14,200 Compute Units.

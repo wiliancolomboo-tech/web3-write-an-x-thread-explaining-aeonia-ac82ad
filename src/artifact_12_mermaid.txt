@@ -1,0 +1,62 @@
+flowchart TD
+    subgraph ClientLayer["User & Keeper Ingress"]
+        Trader["Trader / Front-end App"]
+        Keeper["Off-chain Keeper Bot (Rust)"]
+        JitoRelay["Jito Block Engine (MEV Protection)"]
+    end
+
+    subgraph ProgramBoundary["Aeonian Trade Core Protocol (Anchor Engine)"]
+        Dispatcher{"Instruction Dispatcher"}
+        
+        subgraph SecurityGuards["Security & Verification Layer"]
+            SignerCheck["Signer & Authority Check"]
+            OracleGuard["Oracle Guard (Pyth / Slot Staleness <= 3)"]
+            MathGuard["SafeMath Fixed-Point Engine (I80F48)"]
+            ReentrancyLock["PDA Mutex State Lock"]
+        end
+
+        subgraph CoreState["Program Derived Addresses (PDAs)"]
+            UserMargin["User Margin Account PDA\n['margin', user_pubkey]"]
+            MarketState["Market State PDA\n['market', market_index]"]
+            LiquidityPool["Liquidity Vault PDA\n['vault', mint_pubkey]"]
+            InsuranceFund["Insurance Fund PDA\n['insurance']"]
+        end
+
+        subgraph ExecutionEngine["Execution Engine"]
+            OpenClose["Position Routing & Open/Close"]
+            FundingCrank["Funding Rate Accrual Engine"]
+            Liquidator["Atomic Liquidation Subroutine"]
+        end
+    end
+
+    subgraph ExternalPrograms["External Solana Ecosystem CPIs"]
+        TokenProgram["SPL Token / Token-2022 Program"]
+        PythOracle["Pyth Price Service (Push Oracle Account)"]
+    end
+
+    %% Ingress
+    Trader -->|1. Submit Open / Close Order with Priority Fee| Dispatcher
+    Keeper -->|2. Trigger Liquidation / Funding Crank| JitoRelay
+    JitoRelay -->|3. Bundle Ingress| Dispatcher
+
+    %% Internal routing & validation
+    Dispatcher --> SignerCheck
+    SignerCheck --> OracleGuard
+    OracleGuard -->|Assert Price, Slot Age & Confidence| PythOracle
+    OracleGuard --> ReentrancyLock
+    ReentrancyLock --> MathGuard
+
+    %% Execution pathways
+    MathGuard -->|Valid Order Parameters| OpenClose
+    MathGuard -->|Trigger Undercollateralized Position| Liquidator
+    MathGuard -->|Trigger Hourly Epoch Offset| FundingCrank
+
+    %% State manipulation
+    OpenClose -->|Zero-Copy Read/Write| UserMargin
+    OpenClose -->|Update Open Interest / Skew| MarketState
+    OpenClose -->|CPI Token Transfer| TokenProgram
+    TokenProgram -->|Deposit / Withdraw Vault Balance| LiquidityPool
+
+    Liquidator -->|Transfer Seized Margin & Penalty| UserMargin
+    Liquidator -->|Distribute Liquidation Fee / Bounty| LiquidityPool
+    Liquidator -->|Offset Deficit if Underwater| InsuranceFund

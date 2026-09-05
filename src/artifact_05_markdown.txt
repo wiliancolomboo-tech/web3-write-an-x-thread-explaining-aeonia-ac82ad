@@ -1,0 +1,7 @@
+4/10
+📉 Latency-Insensitive Pricing with Pyth High-Frequency Oracles
+
+Instead of pulling oracle updates via expensive legacy read CPIs:
+1. Aeonian leverages Pyth Network's direct feed accounts passed into the remaining accounts array.
+2. Prices are asserted within an atomic max-staleness window (threshold ≤ 3 slots).
+3. If an oracle confidence interval spreads wider than 0.85%, positions enter a high-volatility conservative margin regime dynamically.

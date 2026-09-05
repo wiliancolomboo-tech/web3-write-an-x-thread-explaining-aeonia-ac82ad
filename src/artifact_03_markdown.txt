@@ -1,0 +1,9 @@
+2/10
+⚡ The Bottleneck: Why Solana Perps Stumble Under Volatility
+
+Most perpetual platforms port EVM-centric virtual-AMM math directly to Solana. The result?
+• Massive account deserialization overhead (~120k CU just to read state).
+• Cross-program invocations (CPIs) hitting compute limits.
+• Inefficient oracles triggering cascading stalls during market liquidation events.
+
+Aeonian does not port legacy architecture. We built natively for Sealevel.

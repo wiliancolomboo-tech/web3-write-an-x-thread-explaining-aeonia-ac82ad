@@ -1,0 +1,8 @@
+5/10
+🛡️ MEV Mitigation & Jito-Solana Bundle Liquidation Pipeline
+
+How we eliminate toxic MEV and order front-running:
+• Liquidations require no dynamic price search.
+• Off-chain keepers simulate state against the tip program.
+• Transactions are bundled via @Jito_Labs block-engine pipelines.
+• Bad debt is socialized directly via an on-chain Insurance Fund pool yielding native real-yield staking APY.

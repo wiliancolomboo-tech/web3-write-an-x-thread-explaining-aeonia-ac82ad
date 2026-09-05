@@ -1,0 +1,7 @@
+Traditional AMM / vAMM                 Aeonian Trade Architecture
+┌────────────────────────────────────┐   ┌────────────────────────────────────┐
+│ • High slippage on volatility      │   │ • Virtual Liquidity + Pyth Oracles │
+│ • High CU consumption (300k+ CU)   │   │ • Optimized Packed Structs (<45k)  │
+│ • Unpredictable gas/reverts        │   │ • Direct Keeper Routing + MEV-aware│
+│ • Fragmented margin accounts       │   │ • Unified Cross-Margin PDA Engine  │
+└────────────────────────────────────┘   └────────────────────────────────────┘

@@ -1,0 +1,7 @@
+7/10
+🛠️ What We Are Building for Developers:
+
+We aren't keeping our codebase in a black box. Aeonian is open-sourcing its core SDK:
+• `@aeonian/ts-sdk`: Ultra-fast TypeScript client with dynamic priority fee management.
+• `@aeonian/keeper-rs`: Rust-based liquidation and funding rate crank keeper with zero-lag websockets.
+• Complete Anchor reference programs.
