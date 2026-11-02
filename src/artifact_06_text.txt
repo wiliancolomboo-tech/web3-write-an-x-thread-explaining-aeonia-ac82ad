@@ -1,0 +1,6 @@
+4/14 Counterparty isolation is critical.
+
+Aeonian isolates each market's collateral into independent Program Derived Addresses (PDAs):
+Seeds: `['vault', market_id.as_ref()]`
+
+Cross-asset contagion is mathematically impossible. A catastrophic flash crash in a memecoin perp cannot drain the SOL-PERP vault.

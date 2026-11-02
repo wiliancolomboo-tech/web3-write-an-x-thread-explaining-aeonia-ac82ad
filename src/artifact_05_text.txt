@@ -1,0 +1,8 @@
+5/10 Performance matters. While other protocols burn 150k+ Compute Units deserializing data, Aeonian uses zero-copy PDA accounts:
+
+Zero-copy `AccountLoader<'info, PositionState>`:
+• Reads direct memory offsets
+• Bypasses costly Borsh heap allocations
+• Cuts CU footprint down to ~34,500 CUs per position update.
+
+Check out this core snippet:

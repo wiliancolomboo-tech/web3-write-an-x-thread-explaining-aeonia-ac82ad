@@ -1,0 +1,95 @@
+🧵 1/10
+Decentralized perps on EVM are throttled by 12s block times, toxic MEV reordering, and fragmented liquidity.
+
+Enter @AeonianTrade on @Solana: Institutional-grade perpetuals running at sub-slot execution speeds with zero front-running.
+
+Here is the deep-dive technical breakdown + livestream schedule 👇⚡
+
+---
+
+🧵 2/10
+The Core Bottleneck:
+Traditional DEXs rely on off-chain matching engines that settle asynchronously on-chain, introducing counterparty risk.
+
+Aeonian settles 100% on-chain within a single Solana slot (400ms).
+No off-chain matching dark pools.
+Deterministic execution.
+Auditable solvency.
+
+---
+
+🧵 3/10
+Unified Liquidity Engine (ULP):
+Instead of fragmented order books, Aeonian leverages an asset-backed ULP model paired with a dynamic vAMM.
+
+- LPs deposit $USDC / $SOL / $mSOL
+- Traders pull borrow capacity with real-time dynamic funding rates
+- Cross-margin collateralization with zero-copy state deserialization
+
+---
+
+🧵 4/10
+Sub-Slot Oracle Security 🛡️
+Oracle manipulation is the #1 perp exploit vector. Aeonian integrates Pyth push/pull oracles with strict invariant gates:
+1. Max Confidence Interval check: `conf / price < 0.002` (0.2%)
+2. Max Staleness constraint: `current_slot - publish_slot <= 2`
+3. Circuit breaker on extreme EMA skew
+
+---
+
+🧵 5/10
+CU Efficiency & Performance:
+Every compute unit matters. Aeonian achieves < 42,000 CU per order execution via:
+⚡ Zero-Copy (`#[account(zero_copy)]`) account loaders
+⚡ Pre-compiled PDA seed verification
+⚡ Packed 64-bit integer bitmasks for trade flags
+⚡ Bypassing non-essential CPI logging
+
+---
+
+🧵 6/10
+Liquidations That Never Miss:
+Aeonian’s liquidation engine is permissionless yet prioritized.
+Keepers scan PDA registries through indexed off-chain Geyser plugins.
+When `Margin_Ratio < Maintenance_Threshold`, keepers execute `liquidate()` atomically.
+Liquidators earn 2.5% of remaining collateral instantly.
+
+---
+
+🧵 7/10
+Developer First:
+The entire Aeonian protocol is designed for composability.
+- Yield aggregators can build delta-neutral vaults on ULP LP tokens
+- Algorithmic market makers can hook directly into Anchor instructions via CPI
+- On-chain events emit clean byte layouts for custom indexers
+
+---
+
+🧵 8/10
+ANNOUNCING: The Aeonian Masterclass Livestream Series 🔴🎙️
+
+Want to see how institutional trading engines are built on Solana? We’re hosting a 3-part live build & trading series on YouTube & X Spaces!
+
+📅 Mark your calendars:
+Episode 1: Oct 24, 18:00 UTC
+Episode 2: Oct 31, 18:00 UTC
+Episode 3: Nov 07, 18:00 UTC
+
+---
+
+🧵 9/10
+Livestream Roadmap:
+🔹 Ep 1: Architectural Deep Dive – PDA state layouts, vAMM math & zero-copy structs.
+🔹 Ep 2: Building High-Speed Keepers – Connecting to Solana Geyser for sub-slot liquidations.
+🔹 Ep 3: Live Capital Deployment & Stress Testing – Simulating flash crashes & volatility events.
+
+---
+
+🧵 10/10
+DeFi is shifting to high-performance, verifiable on-chain execution. Aeonian Trade is setting the benchmark on Solana.
+
+1. Like & Retweet the first post 🔁
+2. Turn on notifications for the Livestreams 🔔
+3. Read the technical docs & audit reports: https://docs.aeonian.trade
+
+The future of decentralized institutional trading is live. 🚀

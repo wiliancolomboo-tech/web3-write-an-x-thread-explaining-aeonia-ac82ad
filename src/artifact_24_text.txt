@@ -1,0 +1,9 @@
+Aeonian Trade Protocol Integration Tests
+    ✔ 1. Initializes Global Config and Admin Authority (9240 CUs) (182ms)
+    ✔ 2. Submits OrderRequest with Collateral Escrow (21450 CUs) (412ms)
+    ✔ 3. Rejects Execution on Same Slot (Anti-Sandwich Guard) (45ms)
+    ✔ 4. Successfully Executes Position on Slot N+1 via Pyth Oracle Push (23890 CUs) (510ms)
+    ✔ 5. Blocks Liquidation when Position is Solvent (62ms)
+    ✔ 6. Executes Liquidation and Rewards Keeper Bounty on Price Drop (18120 CUs) (389ms)
+
+  6 passing (1.6s)

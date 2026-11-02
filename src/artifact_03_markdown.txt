@@ -1,9 +1,91 @@
-2/10
-⚡ The Bottleneck: Why Solana Perps Stumble Under Volatility
+🧵 1/10
+Decentralized perpetuals have historically been bottlenecked by EVM latency, toxic MEV order flow, and sluggish liquidation cranks.
 
-Most perpetual platforms port EVM-centric virtual-AMM math directly to Solana. The result?
-• Massive account deserialization overhead (~120k CU just to read state).
-• Cross-program invocations (CPIs) hitting compute limits.
-• Inefficient oracles triggering cascading stalls during market liquidation events.
+Enter @AeonianTrade: an institutional-grade, ultra-low latency perpetual trading engine engineered natively on Solana. 
 
-Aeonian does not port legacy architecture. We built natively for Sealevel.
+Here is an architectural deep dive. 👇⚡
+
+---
+
+🧵 2/10
+Traditional vAMMs separate pricing from liquidity, causing toxic skew and reserve depletion during volatile market events. 
+
+Aeonian eliminates this via externalized virtual liquidity routing:
+• Sub-50ms @PythNetwork push oracles
+• Isolated dynamic risk engines
+• Zero-slippage in-band execution
+
+---
+
+🧵 3/10
+Under the hood: Solana’s Sealevel runtime enables Aeonian to eliminate global order book contention.
+
+Every trader’s position is an isolated PDA:
+`seeds = [b"position", user_pubkey.as_ref(), market_id.to_le_bytes()]`
+
+Trades execute concurrently without locking cross-trader states. High throughput, zero congestion.
+
+---
+
+🧵 4/10
+Let’s talk liquidation dynamics. 
+
+EVM protocols rely on asynchronous multi-block Dutch auctions—frequently ending in bad debt during cascading crashes.
+
+Aeonian features Crankless JIT (Just-In-Time) liquidations:
+Sub-slot execution directly through Flash Fillers at < 35k Compute Units.
+
+---
+
+🧵 5/10
+Capital Efficiency: Aeonian Liquidity Pool (ALP).
+
+LPs deposit USDC, SOL, or BTC into a unified, delta-hedged solvency vault. 
+ALP acts as the dynamic counterparty, streaming auto-compounding borrow rates, swap fees, and liquidation bounties directly to LPs.
+
+---
+
+🧵 6/10
+Security first. The core smart contracts enforce:
+🛡️ Strict Reentrancy Transience
+🛡️ Strict Oracle Staleness Guards (stale threshold: <= 5 slots)
+🛡️ Account ownership & discriminator verification via zero-copy deserialization
+🛡️ Zero reliance on unconstrained CPIs
+
+---
+
+🧵 7/10
+Developers & Quant Traders: Aeonian provides a low-overhead Rust SDK and TypeScript client for direct RPC integration. 
+
+Execute complex algorithmic delta-neutral strategies, programmatic TWAP/limit orders, or high-frequency market-making natively on-chain.
+
+---
+
+🧵 8/10
+Want to see the code, review live performance benchmarks, and run localnet simulations?
+
+We are launching the **Aeonian Trade Developer & Trader Livestream Series**! 🎙️
+
+Get ready for deep-dive terminal sessions, live contract audits, and LP profitability modeling.
+
+---
+
+🧵 9/10
+📅 LIVESTREAM SCHEDULE:
+📍 Session 1: "Architecting Ultra-Low Latency Derivatives on Solana"
+   • Deep dive into PDAs, Sealevel optimization & Pyth oracles.
+📍 Session 2: "Algorithmic Arbitrage & JIT Liquidator Bots"
+   • Live coding a sub-50ms liquidation bot in Rust.
+
+🔔 Set your reminders on YouTube & X Spaces: [LINK]
+
+---
+
+🧵 10/10
+The future of institutional DeFi trading requires CEX-tier speed combined with uncompromising on-chain custody and transparency. 
+
+Aeonian Trade delivers on that promise.
+
+Read the technical docs, inspect the contracts, and join our upcoming livestream. 
+
+RT + Follow @AeonianTrade to stay ahead. 🚀

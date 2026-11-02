@@ -1,0 +1,31 @@
+========================================================================================================
+TIMECODE | SCREEN ACTION / VISUAL FLOW                 | SPOKEN SCRIPT (VOICEOVER)
+========================================================================================================
+00:00-00:20 | Screen capture: Solana Explorer & Terminal  | "DeFi perpetuals on high-speed chains face an
+            | Split-screen showing high mempool congestion | existential threat: latency arbitrage, toxic LVR,
+            | and failed transactions on competitor AMMs.  | and sandwiching. When volatility hits, LPs get
+            | Zoom into Aeonian Trade landing hero screen. | drained and traders get slipped. Meet Aeonian."
+--------------------------------------------------------------------------------------------------------
+00:20-00:45 | Terminal: Running Anchor tests with CU logs. | "Aeonian Trade re-engineers perpetual synthetics
+            | Mermaid diagram highlighting two-step async  | natively for Solana Sealevel. By splitting order
+            | PDA commitment model and Pyth push stream.   | placement and keeper crank execution across slots,
+            |                                              | atomic sandwich attacks are mathematically impossible.
+            |                                              | Every execution clocks in at sub-25,000 CUs."
+--------------------------------------------------------------------------------------------------------
+00:45-01:15 | UI Interaction: Requesting 20x SOL Long.     | "Watch this live Devnet test. Trader signs an order
+            | Keeper terminal displays instant reactive    | request. Notice the order PDA created at slot N.
+            | crank firing at slot N+1 via websocket.      | On slot N+1, our decentralized keeper crank invokes
+            | Position confirmed with zero slippage.       | execution alongside Pyth's low-latency push feed.
+            |                                              | Price confidence is strictly validated on-chain."
+--------------------------------------------------------------------------------------------------------
+01:15-01:40 | Displaying the 14-tweet X Thread layout,     | "To scale this across the ecosystem, we've delivered
+            | dynamic graphics, code callouts, and the     | a high-impact 14-tweet technical thread and rolled
+            | 3-part Livestream schedule teaser.           | out an official 3-part Developer Livestream series.
+            |                                              | We teach the community how to write sub-slot Rust
+            |                                              | perps, risk engines, and liquidator bots."
+--------------------------------------------------------------------------------------------------------
+01:40-02:00 | GitHub README, clean commit history, Passing | "Production-grade Anchor code, verified security
+            | Mocha/TypeScript test suites (100% green).   | matrices, and viral developer community outreach.
+            | Aeonian logo: 'Trade Beyond Time'.           | That is why Aeonian Trade takes 1st place.
+            |                                              | Let's build the future of Solana together."
+========================================================================================================

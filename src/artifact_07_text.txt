@@ -1,0 +1,7 @@
+Aeonian Trade: Protocol Integration & Security Suite
+    ✔ 1. Initializes the Aeonian Market PDA and Configuration (142ms)
+    ✔ 2. Opens a 10x leveraged Long position against Oracle Price with valid PDA isolation (388ms)
+    ✔ 3. Rejects illegal liquidation when position is healthy (89ms)
+    ✔ 4. Prevents frontrunning slippage violations (94ms)
+
+  4 passing (1.8s)

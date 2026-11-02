@@ -1,33 +1,52 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { AeonianTrade } from "../target/types/aeonian_trade";
-import { 
-  createMint, 
-  createAccount, 
-  mintTo, 
-  TOKEN_PROGRAM_ID 
+import {
+  createMint,
+  createAccount,
+  mintTo,
+  TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
-import { Keypair, SystemProgram, PublicKey } from "@solana/web3.js";
 import { expect } from "chai";
 
-describe("aeonian-trade lifecycle & risk tests", () => {
+describe("aeonian-trade protocol tests", () => {
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
 
   const program = anchor.workspace.AeonianTrade as Program<AeonianTrade>;
 
-  let collateralMint: PublicKey;
-  let userTokenAccount: PublicKey;
-  let liquidatorTokenAccount: PublicKey;
-  let vaultPda: PublicKey;
-  let marketPda: PublicKey;
-  let marginPda: PublicKey;
+  let collateralMint: anchor.web3.PublicKey;
+  let userTokenAccount: anchor.web3.PublicKey;
+  let liquidatorTokenAccount: anchor.web3.PublicKey;
 
-  const marketIndex = 1;
-  const mockOracleKeypair = Keypair.generate();
+  const marketId = new anchor.BN(101);
+  const user = anchor.web3.Keypair.generate();
+  const liquidator = anchor.web3.Keypair.generate();
+
+  let marketPda: anchor.web3.PublicKey;
+  let vaultPda: anchor.web3.PublicKey;
+  let positionPda: anchor.web3.PublicKey;
+
+  const PRECISION = new anchor.BN(1_000_000_000_000);
 
   before(async () => {
-    // 1. Create collateral mint (USDC equivalent, 6 decimals)
+    // Fund test wallets
+    await provider.connection.confirmTransaction(
+      await provider.connection.requestAirdrop(
+        user.pubkey,
+        10 * anchor.web3.LAMPORTS_PER_SOL
+      ),
+      "confirmed"
+    );
+    await provider.connection.confirmTransaction(
+      await provider.connection.requestAirdrop(
+        liquidator.pubkey,
+        10 * anchor.web3.LAMPORTS_PER_SOL
+      ),
+      "confirmed"
+    );
+
+    // Create collateral mint (USDC simulator with 6 decimals)
     collateralMint = await createMint(
       provider.connection,
       (provider.wallet as any).payer,
@@ -36,136 +55,156 @@ describe("aeonian-trade lifecycle & risk tests", () => {
       6
     );
 
-    // 2. Derive Market & Vault PDAs
-    const marketIndexBuffer = Buffer.alloc(2);
-    marketIndexBuffer.writeUInt16LE(marketIndex, 0);
-
-    [marketPda] = PublicKey.findProgramAddressSync(
-      [Buffer.from("market"), marketIndexBuffer],
-      program.programId
-    );
-
-    [vaultPda] = PublicKey.findProgramAddressSync(
-      [Buffer.from("vault"), marketIndexBuffer],
-      program.programId
-    );
-
-    [marginPda] = PublicKey.findProgramAddressSync(
-      [Buffer.from("margin"), provider.wallet.publicKey.toBuffer()],
-      program.programId
-    );
-
-    // 3. Setup Token Accounts
+    // Setup Token Accounts
     userTokenAccount = await createAccount(
       provider.connection,
       (provider.wallet as any).payer,
       collateralMint,
-      provider.wallet.publicKey
+      user.pubkey
     );
 
     liquidatorTokenAccount = await createAccount(
       provider.connection,
       (provider.wallet as any).payer,
       collateralMint,
-      provider.wallet.publicKey
+      liquidator.pubkey
     );
 
+    // Mint 10,000 USDC to user
     await mintTo(
       provider.connection,
       (provider.wallet as any).payer,
       collateralMint,
       userTokenAccount,
       provider.wallet.publicKey,
-      1_000_000_000 // 1,000 USDC
+      10_000_000_000
+    );
+
+    // Derive PDAs
+    [marketPda] = anchor.web3.PublicKey.findProgramAddressSync(
+      [
+        Buffer.from("market"),
+        collateralMint.toBuffer(),
+        marketId.toArrayLike(Buffer, "le", 8),
+      ],
+      program.programId
+    );
+
+    [vaultPda] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("vault"), marketPda.toBuffer()],
+      program.programId
+    );
+
+    [positionPda] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("position"), marketPda.toBuffer(), user.pubkey.toBuffer()],
+      program.programId
     );
   });
 
-  it("Initializes the perpetual market", async () => {
+  it("Initializes Aeonian Market and Vault PDA securely", async () => {
     await program.methods
-      .initializeMarket(marketIndex, mockOracleKeypair.publicKey, new anchor.BN(0))
+      .initializeMarket(marketId, new anchor.BN(0))
       .accounts({
         market: marketPda,
         vault: vaultPda,
         collateralMint: collateralMint,
         authority: provider.wallet.publicKey,
-        systemProgram: SystemProgram.programId,
+        systemProgram: anchor.web3.SystemProgram.programId,
         tokenProgram: TOKEN_PROGRAM_ID,
         rent: anchor.web3.SYSVAR_RENT_PUBKEY,
       })
       .rpc();
 
-    const marketState = await program.account.market.fetch(marketPda);
-    expect(marketState.marketIndex).to.equal(marketIndex);
+    const marketState = await program.account.marketState.fetch(marketPda);
+    expect(marketState.marketId.toNumber()).to.equal(101);
+    expect(marketState.vault.toBase58()).to.equal(vaultPda.toBase58());
   });
 
-  it("Initializes a user zero-copy margin account", async () => {
-    await program.methods
-      .initializeMarginAccount()
-      .accounts({
-        marginAccount: marginPda,
-        owner: provider.wallet.publicKey,
-        systemProgram: SystemProgram.programId,
-      })
-      .rpc();
-
-    const marginData = await program.account.marginAccount.fetch(marginPda);
-    expect(marginData.owner.toBase58()).to.equal(provider.wallet.publicKey.toBase58());
-    expect(marginData.totalCollateral.toNumber()).to.equal(0);
-  });
-
-  it("Deposits collateral into the margin engine", async () => {
-    const depositAmount = new anchor.BN(500_000_000); // 500 USDC
+  it("Opens a 10x leveraged Long position within risk bounds", async () => {
+    const currentSlot = await provider.connection.getSlot();
+    const oraclePrice = new anchor.BN(150).mul(PRECISION); // $150.00 SOL/USD
+    const collateralAmount = new anchor.BN(1_000_000_000); // 1,000 USDC
+    const positionSize = new anchor.BN(66_666_666); // ~10,000 USD notional
 
     await program.methods
-      .depositCollateral(depositAmount)
+      .openPosition(
+        positionSize,
+        collateralAmount,
+        true, // Long
+        oraclePrice,
+        new anchor.BN(currentSlot)
+      )
       .accounts({
-        marginAccount: marginPda,
-        userTokenAccount: userTokenAccount,
+        market: marketPda,
+        position: positionPda,
         vault: vaultPda,
-        owner: provider.wallet.publicKey,
+        userTokenAccount: userTokenAccount,
+        user: user.pubkey,
         tokenProgram: TOKEN_PROGRAM_ID,
+        systemProgram: anchor.web3.SystemProgram.programId,
       })
+      .signers([user])
       .rpc();
 
-    const marginData = await program.account.marginAccount.fetch(marginPda);
-    expect(marginData.totalCollateral.toNumber()).to.equal(depositAmount.toNumber());
+    const pos = await program.account.positionState.fetch(positionPda);
+    expect(pos.owner.toBase58()).to.equal(user.pubkey.toBase58());
+    expect(pos.isLong).to.be.true;
+    expect(pos.size.toNumber()).to.equal(positionSize.toNumber());
   });
 
-  it("Rejects trade execution if oracle slot is stale", async () => {
-    // Write stale oracle mock data (Slot = 1, Price = 150_000_000 [$150])
-    const oracleAccount = Keypair.generate();
-    const staleSlot = 1;
-    const price = 150_000_000;
-
-    const buffer = Buffer.alloc(64);
-    buffer.writeBigInt64LE(BigInt(price), 0);
-    buffer.writeBigUInt64LE(BigInt(staleSlot), 8);
-
-    const rentLamports = await provider.connection.getMinimumBalanceForRentExemption(64);
-    const createTx = new anchor.web3.Transaction().add(
-      SystemProgram.createAccount({
-        fromPubkey: provider.wallet.publicKey,
-        newAccountPubkey: oracleAccount.publicKey,
-        space: 64,
-        lamports: rentLamports,
-        programId: program.programId,
-      })
-    );
-    await provider.sendAndConfirm(createTx, [oracleAccount]);
+  it("Rejects position creation when oracle price is stale (>3 slots)", async () => {
+    const currentSlot = await provider.connection.getSlot();
+    const staleSlot = new anchor.BN(currentSlot - 10);
+    const oraclePrice = new anchor.BN(150).mul(PRECISION);
 
     try {
       await program.methods
-        .openPosition(new anchor.BN(10_000_000), new anchor.BN(160_000_000))
+        .openPosition(
+          new anchor.BN(10_000),
+          new anchor.BN(100_000),
+          true,
+          oraclePrice,
+          staleSlot
+        )
         .accounts({
-          marginAccount: marginPda,
           market: marketPda,
-          oracle: oracleAccount.publicKey,
-          owner: provider.wallet.publicKey,
+          position: positionPda,
+          vault: vaultPda,
+          userTokenAccount: userTokenAccount,
+          user: user.pubkey,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          systemProgram: anchor.web3.SystemProgram.programId,
         })
+        .signers([user])
         .rpc();
-      expect.fail("Expected OracleStale error was not thrown");
+      expect.fail("Transaction should have failed due to stale oracle");
     } catch (err: any) {
-      expect(err.toString()).to.include("OracleStale");
+      expect(err.error.errorCode.code).to.equal("StaleOraclePrice");
     }
+  });
+
+  it("Liquidates unhealthy position when equity breaches maintenance margin", async () => {
+    const currentSlot = await provider.connection.getSlot();
+    // Simulate massive market crash: Price drops from $150 to $50
+    const crashedPrice = new anchor.BN(50).mul(PRECISION);
+
+    const tx = await program.methods
+      .liquidatePosition(crashedPrice, new anchor.BN(currentSlot))
+      .accounts({
+        market: marketPda,
+        position: positionPda,
+        vault: vaultPda,
+        liquidatorTokenAccount: liquidatorTokenAccount,
+        liquidator: liquidator.pubkey,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      })
+      .signers([liquidator])
+      .rpc();
+
+    expect(tx).to.be.a("string");
+
+    const pos = await program.account.positionState.fetch(positionPda);
+    expect(pos.size.toNumber()).to.equal(0);
+    expect(pos.collateral.toNumber()).to.equal(0);
   });
 });

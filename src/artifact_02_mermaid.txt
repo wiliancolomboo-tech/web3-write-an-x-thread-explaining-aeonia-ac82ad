@@ -1,0 +1,74 @@
+flowchart TD
+    subgraph Client_Layer ["Client & Community Layer"]
+        Trader["Trader / Stream Viewer"]
+        Keeper["Autonomous Keeper Bot"]
+        Host["Livestream Host / Trader"]
+    end
+
+    subgraph Program_Layer ["Aeonian Trade Program (Anchor eBPF Runtime)"]
+        direction TB
+        subgraph Endpoints ["Instruction Entrypoints"]
+            IX_Open["open_position()"]
+            IX_Close["close_position()"]
+            IX_Liquidate["liquidate_position()"]
+            IX_StreamTrade["execute_stream_signal()"]
+        end
+
+        subgraph Security ["Security & Guard Layer"]
+            ReentrancyGuard["Reentrancy Lock"]
+            CU_Budget["Compute Budget Guard"]
+            SignerCheck["Signer & Authority Validation"]
+            OracleConfidence["Pyth Oracle Confidence Check\n(conf < price / 100)"]
+        end
+
+        subgraph State_PDAs ["Program Derived Addresses (PDAs)"]
+            MarketPDA[("Market State PDA\n['market', market_id]")]
+            PositionPDA[("User Position PDA\n['position', market, user]")]
+            VaultPDA[("Collateral Vault PDA\n['vault', market_id]")]
+            StreamPDA[("Livestream Signal PDA\n['stream_signal', host_pubkey]")]
+        end
+
+        subgraph Accounting ["Risk & Accounting Engine"]
+            PnL["Mark-to-Market PnL Calc"]
+            Funding["Funding Rate Settle Engine"]
+            MarginEngine["Cross / Isolated Margin Guard"]
+        end
+    end
+
+    subgraph External_Oracles ["External Oracle Infrastructure"]
+        PythFeed["Pyth Price Feed Account\n(Push/Pull Price & Conf)"]
+    end
+
+    subgraph SPL_Tokens ["Token Ledger (SPL Token Program)"]
+        UserATA["User Collateral ATA"]
+        ProtocolVaultATA["Protocol Vault ATA (PDA Controlled)"]
+        LiquidatorATA["Keeper Reward ATA"]
+    end
+
+    %% Interactions
+    Trader -->|1. Sign & Submit Order| IX_Open
+    Keeper -->|Execute Insolvent Margin| IX_Liquidate
+    Host -->|Broadcast Live Trade Hook| IX_StreamTrade
+
+    IX_Open --> SignerCheck
+    IX_Liquidate --> SignerCheck
+    IX_StreamTrade --> SignerCheck
+
+    SignerCheck --> ReentrancyGuard
+    ReentrancyGuard --> CU_Budget
+    CU_Budget --> OracleConfidence
+
+    OracleConfidence -->|Feed Validation| PythFeed
+
+    OracleConfidence --> PnL
+    PnL --> Funding
+    Funding --> MarginEngine
+
+    MarginEngine -->|Mutate State| MarketPDA
+    MarginEngine -->|Mutate Position| PositionPDA
+    IX_StreamTrade -->|Log Verifiable Signal| StreamPDA
+
+    MarginEngine -->|CPI: Transfer Collateral| ProtocolVaultATA
+    UserATA -.->|Deposit| ProtocolVaultATA
+    ProtocolVaultATA -.->|Disburse Settlement| UserATA
+    ProtocolVaultATA -.->|Disburse Fee| LiquidatorATA

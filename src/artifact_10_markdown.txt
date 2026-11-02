@@ -1,8 +1,6 @@
-9/10
-📅 Stream 2: "Crushing Liquidations: Rust Keepers, Jito Bundles & Oracles"
-• Date: Tuesday, Nov 26 | 17:00 UTC
-• Live deployment of our ultra-fast liquidation bot on Devnet + stress testing under 50% simulated flash crashes.
-
-📅 Stream 3: "Liquidity Architecture: Building the Aeonian LP Single-Sided Yield Vault"
-• Date: Thursday, Dec 5 | 18:00 UTC
-• Walkthrough of risk management, delta hedging, and yield mechanics for passive LPs.
+7/ Security Architecture:
+Aeonian features:
+🔒 Strict Signer Check Constraints
+🛡️ Token Account Re-entrancy Guards via CPI State Lock
+⚙️ Flash-Crash Circuit Breakers triggered when $|P_{\text{mark}} - P_{\text{pyth}}| > 2.5\%$
+🏦 Multi-vault token collateral isolation. [8/14]

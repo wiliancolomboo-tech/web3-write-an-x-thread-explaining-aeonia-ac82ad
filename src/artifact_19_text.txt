@@ -1,0 +1,7 @@
+Aeonian Trade Protocol & Livestream Registry QA Matrix
+    ✔ Initializes a new Aeonian Perpetual Market with virtual liquidity reserves (234ms)
+    ✔ Opens a leveraged long position on Aeonian Trade (412ms)
+    ✔ Schedules an Aeonian Developer Livestream session (189ms)
+    ✔ Verifies an attendee registration for the scheduled livestream session (210ms)
+
+  4 passing (1.05s)

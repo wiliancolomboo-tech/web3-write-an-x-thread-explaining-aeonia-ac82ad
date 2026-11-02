@@ -1,0 +1,7 @@
+11/14 
+📺 EPISODE 3: "Building Keeper Bots & Yield Automation"
+- Open-source Keeper crank repo walkthrough
+- Building MEV-resistant trading bots on Solana
+- Live Q&A with Founder & Lead Systems Architect
+
+🎁 Special perks: Attendees will unlock exclusive Devnet Alpha testing keys and high-yield vault access during Mainnet Genesis.

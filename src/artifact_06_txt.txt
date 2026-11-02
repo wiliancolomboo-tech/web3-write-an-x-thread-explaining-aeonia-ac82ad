@@ -1,0 +1,35 @@
+========================================================================================
+TIMECODE  | SCREENPLAY / VISUAL ACTION               | SPOKEN NARRATIVE (AUDIO TRACK)
+========================================================================================
+0:00-0:15 | Title Slide: Aeonian Trade Technical       "Decentralized perpetuals on Solana have 
+          | Architecture. Fast pan to terminal showing| long suffered from a tradeoff: order books 
+          | `anchor test` passing with sub-45k CUs.   | demand extreme compute, while AMMs suffer 
+          |                                           | from severe slippage. Aeonian Trade solves this."
+
+0:15-0:35 | Diagram zooms into the ALP multi-asset    "Aeonian introduces an Oracle-Guaranteed, 
+          | vault & Pyth push/pull oracle feed.       | Multi-Asset Liquidity Pool. Traders receive 
+          | Highlight: Zero Price Impact execution.   | zero price impact on entry, settling against 
+          |                                           | real-time Pyth price feeds with sub-second 
+          |                                           | finality on Solana."
+
+0:35-0:55 | Screen shows code of `lib.rs`             "Under the hood, our custom Anchor engine 
+          | highlighting `parse_pyth_price` and       | executes settlements in under 42,000 Compute 
+          | zero-copy byte extraction.                | Units. By utilizing zero-copy deserialization 
+          |                                           | and strict invariant health factors, the protocol 
+          |                                           | is mathematically immune to stale oracle exploits."
+
+0:55-1:15 | Switch to live keeper bot cranking.      "Watch this: As market volatility triggers a 
+          | A healthy trade is guarded, then simulated| threshold breach, our asynchronous keeper 
+          | price drop triggers instant liquidation.  | cranks execute liquidation instantly, returning 
+          |                                           | bad debt risk to zero while protecting user funds."
+
+1:15-1:40 | Display Livestream Schedule Graphic with  "To onboard the next wave of Web3 builders, 
+          | dates, syllabus, and interactive demo     | we're announcing the 4-part Aeonian Technical 
+          | environments on Solana Devnet.            | Livestream Series—covering everything from custom 
+          |                                           | keeper bots to delta-neutral LP strategies."
+
+1:40-2:00 | Call to Action screen: GitHub repo link,  "Check out the live repository, run the Anchor 
+          | X handle @AeonianTrade, and whitelist     | test suite yourself, and subscribe to our 
+          | submission portal.                        | technical livestreams. This is institutional-grade 
+          |                                           | perpetual trading, built native on Solana."
+========================================================================================

@@ -1,0 +1,11 @@
+11/ 🗓️ Livestream Schedule:
+
+🔹 Part 1: "Building Ultra-Low-Latency DeFi on Solana"
+- Sealevel parallel architecture
+- Zero-copy optimizations
+📅 Date: Thursday, Oct 24, 2025 | 18:00 UTC
+
+🔹 Part 2: "Writing a Python/Rust Liquidation Bot from Scratch"
+- Subscribing to Geyser gRPC
+- Optimizing Jito-Solana MEV bundles
+📅 Date: Tuesday, Oct 29, 2025 | 18:00 UTC [12/14]

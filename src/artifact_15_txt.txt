@@ -1,0 +1,47 @@
+================================================================================
+TIME    | VISUAL FOCUS                     | SPOKEN AUDIO NARRATIVE
+================================================================================
+00:00 - | Screen capture of Solana Beach & | "Decentralized perpetuals on Solana 
+00:15   | high-frequency transaction       | should be instantaneous, capital-
+        | explorer, transitioning to       | efficient, and bulletproof. But right 
+        | Aeonian Trade Terminal.          | now, latency leaks, sandwich MEV, and 
+        |                                  | bloated compute units plague DeFi. 
+        |                                  | Aeonian Trade changes the paradigm."
+
+00:15 - | Architecture Diagram animation:  | "At the core of Aeonian is a unified 
+00:35   | Trader -> AeonPool PDA ->        | multi-asset synthetic liquidity vault 
+        | Pyth Oracle -> Zero-Copy PDA.    | governed by zero-copy Sealevel 
+        |                                  | memory structures. Instead of paying 
+        |                                  | 100,000+ CUs to deserialize Borsh 
+        |                                  | structures, our zero-copy positions 
+        |                                  | execute in under 35,000 Compute Units."
+
+00:35 - | Split screen: VS Code Anchor     | "Notice our oracle guard: we enforce 
+00:55   | Program showing Pyth validation  | atomic confidence ratios alongside 
+        | and terminal running mocha test. | sub-5-slot staleness checks directly 
+        |                                  | against Pyth feeds. If the market is 
+        |                                  | dislocated or confidence drops below 
+        |                                  | 99.9%, the transaction reverts 
+        |                                  | safely before bad debt can form."
+
+00:55 - | Terminal executing the keeper    | "Our liquidation engine runs fully 
+01:20   | daemon: Liquidate instruction    | decentralized keeper daemons. Margin 
+        | firing and splitting fee.        | evaluation occurs on-chain in fixed-
+        |                                  | point math. When maintenance thresholds 
+        |                                  | breach, keepers claim 20% instant 
+        |                                  | bounties while 80% capitalizes the 
+        |                                  | autonomous Insurance Fund PDA."
+
+01:20 - | Visual slides detailing Stream 1 | "To onboard the next cohort of high-
+01:45   | and Stream 2 dates, code repo,   | frequency developers, we're hosting a 
+        | and Discord community link.      | two-part live engineering masterclass: 
+        |                                  | Part 1 breaks down ultra-low-CU Sealevel 
+        |                                  | architectures; Part 2 guides you 
+        |                                  | through building competitive Rust 
+        |                                  | liquidation bots from scratch."
+
+01:45 - | Aeonian Trade logo with GitHub   | "Aeonian Trade is setting the technical 
+02:00   | repository URL and X handle.     | standard for on-chain derivatives. Read 
+        |                                  | our thread, join the livestreams, and 
+        |                                  | build the future of Solana DeFi with us."
+================================================================================

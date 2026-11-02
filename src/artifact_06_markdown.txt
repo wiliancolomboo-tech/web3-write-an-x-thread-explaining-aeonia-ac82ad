@@ -1,8 +1,6 @@
-5/10
-🛡️ MEV Mitigation & Jito-Solana Bundle Liquidation Pipeline
+3/ Real-Time Oracles Without Front-Running:
+Aeonian utilizes @PythNetwork's low-latency pull oracles. 
 
-How we eliminate toxic MEV and order front-running:
-• Liquidations require no dynamic price search.
-• Off-chain keepers simulate state against the tip program.
-• Transactions are bundled via @Jito_Labs block-engine pipelines.
-• Bad debt is socialized directly via an on-chain Insurance Fund pool yielding native real-yield staking APY.
+Every liquidation and trade instruction accepts verified price attestations validated directly inside the instruction pipeline, checking:
+1. Valid slot age (< 3 slots)
+2. Confidence interval < 0.2% of price. [4/14]

@@ -1,0 +1,7 @@
+4/10 Stale oracles cause protocol insolvency. Aeonian mandates atomic oracle validation on every instruction:
+
+🛡️ Max Staleness: < 5 slots (~2000ms)
+🛡️ Max Price Deviation Confidence: Confidence / Price <= 0.001 (0.1%)
+🛡️ Dynamic Spread Adjustment: Wide spreads during extreme vol protect LPs automatically.
+
+Check the on-chain validation logic below ⬇️

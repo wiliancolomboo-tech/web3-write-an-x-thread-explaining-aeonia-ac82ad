@@ -1,0 +1,20 @@
++-----------------------------------------------------------------------------------------------+
+| VULNERABILITY VECTOR      | PROTOCOL MITIGATION DEFENSE MECHANISM                             |
++-----------------------------------------------------------------------------------------------+
+| Oracle Front-Running      | Slot-staleness enforcement (<= 30 slots) + confidence interval    |
+|                           | boundary verification (conf_ratio <= 0.15%).                      |
++-----------------------------------------------------------------------------------------------+
+| Reentrancy / Flash Loans  | Single-slot execution mutex: user_margin.last_interaction_slot    |
+|                           | checked atomically against Clock::get()?.slot.                    |
++-----------------------------------------------------------------------------------------------+
+| PDA Impersonation         | Explicit canonical seed checks: [b"margin", user.key(), market.key()] |
+|                           | and [b"vault", market_id.to_le_bytes()].                          |
++-----------------------------------------------------------------------------------------------+
+| Cross-Market Contagion    | Discrete vault and authority PDAs; no commingled token vaults.    |
++-----------------------------------------------------------------------------------------------+
+| Integer Overflow / Math   | Enforced checked_math! macros with checked_mul / checked_div on   |
+|                           | all 128-bit pricing curves. Zero unsafe block operations.         |
++-----------------------------------------------------------------------------------------------+
+| Stale State Liquidation   | Invariant validation confirming Margin Ratio < MM before token    |
+|                           | transfer execution; prevents griefing of solvent positions.       |
++-----------------------------------------------------------------------------------------------+

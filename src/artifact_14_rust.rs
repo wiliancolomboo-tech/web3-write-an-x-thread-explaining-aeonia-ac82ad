@@ -1,13 +1,14 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, Token, TokenAccount, Transfer};
+use anchor_spl::token::{self, Mint, Token, TokenAccount, Transfer};
 
-declare_id!("AeonTrade11111111111111111111111111111111111");
+declare_id!("AeonTrd111111111111111111111111111111111111");
 
-pub const MAX_POSITIONS: usize = 4;
+pub const PRECISION: u128 = 1_000_000_000_000; // 1e12 Fixed point
+pub const MAX_LEVERAGE: u64 = 50; // 50x Max Leverage
+pub const MAINTENANCE_MARGIN_BPS: u64 = 500; // 5.00% (500 BPS)
+pub const LIQUIDATION_FEE_BPS: u64 = 250; // 2.50% (250 BPS)
+pub const PROTOCOL_FEE_BPS: u64 = 10; // 0.10% (10 BPS)
 pub const MAX_ORACLE_STALENESS_SLOTS: u64 = 3;
-pub const BASIS_POINTS_DIVISOR: u128 = 10_000;
-pub const MAINTENANCE_MARGIN_BPS: u128 = 500; // 5.00% minimum margin (20x max leverage)
-pub const LIQUIDATION_PENALTY_BPS: u128 = 250; // 2.50% penalty
 
 #[program]
 pub mod aeonian_trade {
@@ -15,341 +16,243 @@ pub mod aeonian_trade {
 
     pub fn initialize_market(
         ctx: Context<InitializeMarket>,
-        market_index: u16,
-        oracle_pubkey: Pubkey,
+        market_id: u64,
         initial_funding_rate: i64,
     ) -> Result<()> {
-        let market = &mut ctx.accounts.market;
-        market.market_index = market_index;
+        let market = &mut ctx.accounts.market.load_init()?;
         market.authority = ctx.accounts.authority.key();
+        market.collateral_mint = ctx.accounts.collateral_mint.key();
         market.vault = ctx.accounts.vault.key();
-        market.oracle = oracle_pubkey;
+        market.market_id = market_id;
         market.total_long_size = 0;
         market.total_short_size = 0;
-        market.cumulative_funding_rate = initial_funding_rate;
-        market.last_funding_timestamp = Clock::get()?.unix_timestamp;
+        market.cumulative_funding_rate_long = 0;
+        market.cumulative_funding_rate_short = 0;
+        market.last_funding_slot = Clock::get()?.slot;
+        market.last_funding_rate = initial_funding_rate;
         market.bump = ctx.bumps.market;
-        Ok(())
-    }
+        market.vault_bump = ctx.bumps.vault;
 
-    pub fn initialize_margin_account(ctx: Context<InitializeMarginAccount>) -> Result<()> {
-        let margin_acc = &mut ctx.accounts.margin_account.load_init()?;
-        margin_acc.owner = ctx.accounts.owner.key();
-        margin_acc.total_collateral = 0;
-        margin_acc.position_count = 0;
-        margin_acc.bump = ctx.bumps.margin_account;
-        margin_acc.padding = [0; 7];
-        Ok(())
-    }
-
-    pub fn deposit_collateral(ctx: Context<DepositCollateral>, amount: u64) -> Result<()> {
-        require!(amount > 0, AeonError::ZeroDepositAmount);
-
-        // CPI to transfer SPL collateral to vault
-        let cpi_accounts = Transfer {
-            from: ctx.accounts.user_token_account.to_account_info(),
-            to: ctx.accounts.vault.to_account_info(),
-            authority: ctx.accounts.owner.to_account_info(),
-        };
-        let cpi_ctx = CpiContext::new(ctx.accounts.token_program.to_account_info(), cpi_accounts);
-        token::transfer(cpi_ctx, amount)?;
-
-        let mut margin_acc = ctx.accounts.margin_account.load_mut()?;
-        margin_acc.total_collateral = margin_acc
-            .total_collateral
-            .checked_add(amount)
-            .ok_or(AeonError::NumericalOverflow)?;
-
-        emit!(CollateralDeposited {
-            user: ctx.accounts.owner.key(),
-            amount,
-            total_collateral: margin_acc.total_collateral,
-        });
-
+        msg!("Aeonian Market Initialized: ID {}", market_id);
         Ok(())
     }
 
     pub fn open_position(
         ctx: Context<OpenPosition>,
-        size_delta: i64,
-        max_acceptable_price: u64,
+        size: u64,
+        collateral_amount: u64,
+        is_long: bool,
+        oracle_price: u64,
+        oracle_slot: u64,
     ) -> Result<()> {
-        require!(size_delta != 0, AeonError::ZeroPositionSize);
-
-        // 1. Validate Oracle Price Freshness
         let current_slot = Clock::get()?.slot;
-        let pyth_price = validate_oracle_account(
-            &ctx.accounts.oracle.to_account_info(),
-            current_slot,
-            MAX_ORACLE_STALENESS_SLOTS,
+        require!(
+            current_slot.saturating_sub(oracle_slot) <= MAX_ORACLE_STALENESS_SLOTS,
+            AeonianError::StaleOraclePrice
+        );
+        require!(collateral_amount > 0, AeonianError::ZeroCollateral);
+        require!(size > 0, AeonianError::ZeroPositionSize);
+
+        // Verify Leverage Bound: size <= collateral * oracle_price * MAX_LEVERAGE
+        let notional_value = (size as u128)
+            .checked_mul(oracle_price as u128)
+            .ok_or(AeonianError::MathOverflow)?
+            .checked_div(PRECISION)
+            .ok_or(AeonianError::MathOverflow)?;
+
+        let max_allowed_notional = (collateral_amount as u128)
+            .checked_mul(MAX_LEVERAGE as u128)
+            .ok_or(AeonianError::MathOverflow)?;
+
+        require!(
+            notional_value <= max_allowed_notional,
+            AeonianError::ExcessiveLeverage
+        );
+
+        // Protocol fee calculation
+        let fee = notional_value
+            .checked_mul(PROTOCOL_FEE_BPS as u128)
+            .ok_or(AeonianError::MathOverflow)?
+            .checked_div(10_000)
+            .ok_or(AeonianError::MathOverflow)? as u64;
+
+        let net_deposit = collateral_amount
+            .checked_sub(fee)
+            .ok_or(AeonianError::InsufficientCollateralForFees)?;
+
+        // Transfer collateral into vault
+        token::transfer(
+            CpiContext::new(
+                ctx.accounts.token_program.to_account_info(),
+                Transfer {
+                    from: ctx.accounts.user_token_account.to_account_info(),
+                    to: ctx.accounts.vault.to_account_info(),
+                    authority: ctx.accounts.user.to_account_info(),
+                },
+            ),
+            collateral_amount,
         )?;
 
-        // Slippage check
-        if size_delta > 0 {
-            require!(pyth_price <= max_acceptable_price, AeonError::SlippageExceeded);
-        } else {
-            require!(pyth_price >= max_acceptable_price, AeonError::SlippageExceeded);
-        }
-
-        let mut margin_acc = ctx.accounts.margin_account.load_mut()?;
-        let market = &mut ctx.accounts.market;
-
-        // 2. Locate or allocate position slot
-        let mut target_index: Option<usize> = None;
-        for i in 0..margin_acc.position_count as usize {
-            if margin_acc.positions[i].market_index == market.market_index {
-                target_index = Some(i);
-                break;
-            }
-        }
-
-        if target_index.is_none() {
-            require!(
-                (margin_acc.position_count as usize) < MAX_POSITIONS,
-                AeonError::MaxPositionsExceeded
-            );
-            target_index = Some(margin_acc.position_count as usize);
-            margin_acc.position_count += 1;
-            margin_acc.positions[target_index.unwrap()] = Position::default();
-            margin_acc.positions[target_index.unwrap()].market_index = market.market_index;
-        }
-
-        let idx = target_index.unwrap();
-        let pos = &mut margin_acc.positions[idx];
-
-        // 3. Compute Position Updates & Entry Price
-        let new_size = pos
-            .size
-            .checked_add(size_delta)
-            .ok_or(AeonError::NumericalOverflow)?;
-
-        pos.size = new_size;
-        pos.entry_price = pyth_price;
-        pos.last_cumulative_funding = market.cumulative_funding_rate;
-
-        // Update Global Open Interest
-        if size_delta > 0 {
+        // Update Market State
+        let mut market = ctx.accounts.market.load_mut()?;
+        if is_long {
             market.total_long_size = market
                 .total_long_size
-                .checked_add(size_delta as u64)
-                .ok_or(AeonError::NumericalOverflow)?;
+                .checked_add(size)
+                .ok_or(AeonianError::MathOverflow)?;
         } else {
             market.total_short_size = market
                 .total_short_size
-                .checked_add(size_delta.unsigned_abs())
-                .ok_or(AeonError::NumericalOverflow)?;
+                .checked_add(size)
+                .ok_or(AeonianError::MathOverflow)?;
         }
 
-        // 4. Assert Margin Health Invariant
-        let is_healthy = evaluate_margin_health(&margin_acc, pyth_price)?;
-        require!(is_healthy, AeonError::InsufficientFreeCollateral);
+        // Initialize User Position
+        let position = &mut ctx.accounts.position;
+        position.owner = ctx.accounts.user.key();
+        position.market = ctx.accounts.market.key();
+        position.size = size;
+        position.collateral = net_deposit;
+        position.entry_price = oracle_price;
+        position.is_long = is_long;
+        position.last_updated_slot = current_slot;
+        position.bump = ctx.bumps.position;
 
-        emit!(PositionModified {
-            owner: margin_acc.owner,
-            market_index: market.market_index,
-            size: pos.size,
-            execution_price: pyth_price,
-        });
-
-        Ok(())
-    }
-
-    pub fn liquidate_position(ctx: Context<LiquidatePosition>) -> Result<()> {
-        let current_slot = Clock::get()?.slot;
-        let pyth_price = validate_oracle_account(
-            &ctx.accounts.oracle.to_account_info(),
-            current_slot,
-            MAX_ORACLE_STALENESS_SLOTS,
-        )?;
-
-        let mut margin_acc = ctx.accounts.margin_account.load_mut()?;
-        let market = &mut ctx.accounts.market;
-
-        // Ensure user is below maintenance margin
-        let is_healthy = evaluate_margin_health(&margin_acc, pyth_price)?;
-        require!(!is_healthy, AeonError::AccountNotEligibleForLiquidation);
-
-        // Find position for target market
-        let pos_idx = margin_acc
-            .positions
-            .iter()
-            .position(|p| p.market_index == market.market_index && p.size != 0)
-            .ok_or(AeonError::PositionNotFound)?;
-
-        let position_size = margin_acc.positions[pos_idx].size;
-        let notional_value = (position_size.unsigned_abs() as u128)
-            .checked_mul(pyth_price as u128)
-            .ok_or(AeonError::NumericalOverflow)?
-            / 1_000_000;
-
-        let liquidation_fee = notional_value
-            .checked_mul(LIQUIDATION_PENALTY_BPS)
-            .ok_or(AeonError::NumericalOverflow)?
-            / BASIS_POINTS_DIVISOR;
-
-        // Zero out liquidated position
-        margin_acc.positions[pos_idx].size = 0;
-        margin_acc.positions[pos_idx].entry_price = 0;
-
-        // Deduct penalty from remaining collateral
-        margin_acc.total_collateral = margin_acc
-            .total_collateral
-            .saturating_sub(liquidation_fee as u64);
-
-        // Reward keeper via CPI
-        let seeds = &[
-            b"market".as_ref(),
-            &market.market_index.to_le_bytes(),
-            &[market.bump],
-        ];
-        let signer = &[&seeds[..]];
-
-        let cpi_accounts = Transfer {
-            from: ctx.accounts.vault.to_account_info(),
-            to: ctx.accounts.liquidator_token_account.to_account_info(),
-            authority: market.to_account_info(),
-        };
-        let cpi_ctx = CpiContext::new_with_signer(
-            ctx.accounts.token_program.to_account_info(),
-            cpi_accounts,
-            signer,
+        msg!(
+            "Position Opened: User={}, Size={}, Collateral={}, IsLong={}",
+            ctx.accounts.user.key(),
+            size,
+            net_deposit,
+            is_long
         );
-        token::transfer(cpi_ctx, liquidation_fee as u64)?;
+        Ok(())
+    }
 
-        emit!(PositionLiquidated {
-            liquidated_user: margin_acc.owner,
-            liquidator: ctx.accounts.liquidator.key(),
-            market_index: market.market_index,
-            liquidated_size: position_size,
-            execution_price: pyth_price,
-            fee_awarded: liquidation_fee as u64,
-        });
+    pub fn liquidate_position(
+        ctx: Context<LiquidatePosition>,
+        oracle_price: u64,
+        oracle_slot: u64,
+    ) -> Result<()> {
+        let current_slot = Clock::get()?.slot;
+        require!(
+            current_slot.saturating_sub(oracle_slot) <= MAX_ORACLE_STALENESS_SLOTS,
+            AeonianError::StaleOraclePrice
+        );
 
+        let position = &mut ctx.accounts.position;
+        require!(position.size > 0, AeonianError::PositionAlreadyClosed);
+
+        let entry_notional = (position.size as u128)
+            .checked_mul(position.entry_price as u128)
+            .ok_or(AeonianError::MathOverflow)?
+            .checked_div(PRECISION)
+            .ok_or(AeonianError::MathOverflow)?;
+
+        let current_notional = (position.size as u128)
+            .checked_mul(oracle_price as u128)
+            .ok_or(AeonianError::MathOverflow)?
+            .checked_div(PRECISION)
+            .ok_or(AeonianError::MathOverflow)?;
+
+        let pnl: i128 = if position.is_long {
+            (current_notional as i128) - (entry_notional as i128)
+        } else {
+            (entry_notional as i128) - (current_notional as i128)
+        };
+
+        let effective_equity: i128 = (position.collateral as i128) + pnl;
+        let maintenance_margin = (current_notional
+            .checked_mul(MAINTENANCE_MARGIN_BPS as u128)
+            .ok_or(AeonianError::MathOverflow)?
+            .checked_div(10_000)
+            .ok_or(AeonianError::MathOverflow)?) as i128;
+
+        // Position must be insolvent under maintenance threshold
+        require!(
+            effective_equity <= maintenance_margin,
+            AeonianError::PositionNotLiquidatable
+        );
+
+        let liquidator_bounty = if effective_equity > 0 {
+            let bounty = (effective_equity as u128)
+                .checked_mul(LIQUIDATION_FEE_BPS as u128)
+                .ok_or(AeonianError::MathOverflow)?
+                .checked_div(10_000)
+                .ok_or(AeonianError::MathOverflow)? as u64;
+            std::cmp::min(bounty, position.collateral)
+        } else {
+            0
+        };
+
+        let market_key = ctx.accounts.market.key();
+        let vault_seeds = &[
+            b"vault".as_ref(),
+            market_key.as_ref(),
+            &[ctx.accounts.market.load()?.vault_bump],
+        ];
+        let signer_seeds = &[&vault_seeds[..]];
+
+        if liquidator_bounty > 0 {
+            token::transfer(
+                CpiContext::new_with_signer(
+                    ctx.accounts.token_program.to_account_info(),
+                    Transfer {
+                        from: ctx.accounts.vault.to_account_info(),
+                        to: ctx.accounts.liquidator_token_account.to_account_info(),
+                        authority: ctx.accounts.vault.to_account_info(),
+                    },
+                    signer_seeds,
+                ),
+                liquidator_bounty,
+            )?;
+        }
+
+        // Decrement Market open interest
+        let mut market = ctx.accounts.market.load_mut()?;
+        if position.is_long {
+            market.total_long_size = market.total_long_size.saturating_sub(position.size);
+        } else {
+            market.total_short_size = market.total_short_size.saturating_sub(position.size);
+        }
+
+        // Reset position state
+        position.size = 0;
+        position.collateral = 0;
+        position.entry_price = 0;
+
+        msg!("Position Liquidated: Bounty Paid={}", liquidator_bounty);
         Ok(())
     }
 }
 
 // -----------------------------------------------------------------------------
-// HELPER FUNCTIONS & MATH ENGINE
-// -----------------------------------------------------------------------------
-
-fn validate_oracle_account(
-    oracle_info: &AccountInfo,
-    current_slot: u64,
-    max_staleness: u64,
-) -> Result<u64> {
-    let data = oracle_info.try_borrow_data()?;
-    require!(data.len() >= 64, AeonError::InvalidOracleAccount);
-
-    // Mock Pyth payload byte parsing for reference implementation:
-    // Offset 0..8: Price (i64), Offset 8..16: Slot (u64), Offset 16..24: Conf (u64)
-    let price_bytes: [u8; 8] = data[0..8].try_into().unwrap();
-    let slot_bytes: [u8; 8] = data[8..16].try_into().unwrap();
-
-    let price = i64::from_le_bytes(price_bytes);
-    let publish_slot = u64::from_le_bytes(slot_bytes);
-
-    require!(price > 0, AeonError::InvalidOraclePrice);
-    require!(
-        current_slot.saturating_sub(publish_slot) <= max_staleness,
-        AeonError::OracleStale
-    );
-
-    Ok(price as u64)
-}
-
-fn evaluate_margin_health(margin_account: &MarginAccount, oracle_price: u64) -> Result<bool> {
-    let mut total_notional: u128 = 0;
-
-    for i in 0..margin_account.position_count as usize {
-        let pos = &margin_account.positions[i];
-        if pos.size != 0 {
-            let notional = (pos.size.unsigned_abs() as u128)
-                .checked_mul(oracle_price as u128)
-                .ok_or(AeonError::NumericalOverflow)?
-                / 1_000_000;
-            total_notional = total_notional
-                .checked_add(notional)
-                .ok_or(AeonError::NumericalOverflow)?;
-        }
-    }
-
-    if total_notional == 0 {
-        return Ok(true);
-    }
-
-    let required_margin = total_notional
-        .checked_mul(MAINTENANCE_MARGIN_BPS)
-        .ok_or(AeonError::NumericalOverflow)?
-        / BASIS_POINTS_DIVISOR;
-
-    Ok((margin_account.total_collateral as u128) >= required_margin)
-}
-
-// -----------------------------------------------------------------------------
-// ACCOUNT STRUCTS & ZERO-COPY DEFINITIONS
-// -----------------------------------------------------------------------------
-
-#[account]
-#[derive(Default)]
-pub struct Market {
-    pub market_index: u16,
-    pub bump: u8,
-    pub authority: Pubkey,
-    pub vault: Pubkey,
-    pub oracle: Pubkey,
-    pub total_long_size: u64,
-    pub total_short_size: u64,
-    pub cumulative_funding_rate: i64,
-    pub last_funding_timestamp: i64,
-}
-
-#[account(zero_copy)]
-#[repr(C)]
-pub struct MarginAccount {
-    pub owner: Pubkey,            // 32 bytes
-    pub total_collateral: u64,     // 8 bytes
-    pub position_count: u8,        // 1 byte
-    pub bump: u8,                  // 1 byte
-    pub padding: [u8; 6],          // 6 bytes to preserve 8-byte alignment
-    pub positions: [Position; 4],  // 4 * 32 bytes = 128 bytes
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, Default, bytemuck::Zeroable, bytemuck::Pod)]
-#[repr(C)]
-pub struct Position {
-    pub market_index: u16,              // 2 bytes
-    pub padding: [u8; 6],               // 6 bytes alignment
-    pub size: i64,                      // 8 bytes (+ long, - short)
-    pub entry_price: u64,               // 8 bytes
-    pub last_cumulative_funding: i64,   // 8 bytes
-}
-
-// -----------------------------------------------------------------------------
-// INSTRUCTION CONTEXTS
+// Account Contexts
 // -----------------------------------------------------------------------------
 
 #[derive(Accounts)]
-#[instruction(market_index: u16)]
+#[instruction(market_id: u64)]
 pub struct InitializeMarket<'info> {
     #[account(
         init,
         payer = authority,
-        space = 8 + std::mem::size_of::<Market>(),
-        seeds = [b"market", market_index.to_le_bytes().as_ref()],
+        space = 8 + std::mem::size_of::<MarketState>(),
+        seeds = [b"market", collateral_mint.key().as_ref(), &market_id.to_le_bytes()],
         bump
     )]
-    pub market: Account<'info, Market>,
+    pub market: AccountLoader<'info, MarketState>,
+
     #[account(
         init,
         payer = authority,
+        seeds = [b"vault", market.key().as_ref()],
+        bump,
         token::mint = collateral_mint,
-        token::authority = market,
-        seeds = [b"vault", market_index.to_le_bytes().as_ref()],
-        bump
+        token::authority = vault
     )]
     pub vault: Account<'info, TokenAccount>,
-    pub collateral_mint: Account<'info, token::Mint>,
+
+    pub collateral_mint: Account<'info, Mint>,
+
     #[account(mut)]
     pub authority: Signer<'info>,
     pub system_program: Program<'info, System>,
@@ -358,118 +261,129 @@ pub struct InitializeMarket<'info> {
 }
 
 #[derive(Accounts)]
-pub struct InitializeMarginAccount<'info> {
-    #[account(
-        init,
-        payer = owner,
-        space = 8 + std::mem::size_of::<MarginAccount>(),
-        seeds = [b"margin", owner.key().as_ref()],
-        bump
-    )]
-    pub margin_account: AccountLoader<'info, MarginAccount>,
-    #[account(mut)]
-    pub owner: Signer<'info>,
-    pub system_program: Program<'info, System>,
-}
-
-#[derive(Accounts)]
-pub struct DepositCollateral<'info> {
-    #[account(
-        mut,
-        seeds = [b"margin", owner.key().as_ref()],
-        bump
-    )]
-    pub margin_account: AccountLoader<'info, MarginAccount>,
-    #[account(mut)]
-    pub user_token_account: Account<'info, TokenAccount>,
-    #[account(mut)]
-    pub vault: Account<'info, TokenAccount>,
-    pub owner: Signer<'info>,
-    pub token_program: Program<'info, Token>,
-}
-
-#[derive(Accounts)]
 pub struct OpenPosition<'info> {
+    #[account(mut)]
+    pub market: AccountLoader<'info, MarketState>,
+
     #[account(
-        mut,
-        seeds = [b"margin", owner.key().as_ref()],
+        init_if_needed,
+        payer = user,
+        space = 8 + PositionState::LEN,
+        seeds = [b"position", market.key().as_ref(), user.key().as_ref()],
         bump
     )]
-    pub margin_account: AccountLoader<'info, MarginAccount>,
+    pub position: Account<'info, PositionState>,
+
+    #[account(
+        mut,
+        seeds = [b"vault", market.key().as_ref()],
+        bump = market.load()?.vault_bump
+    )]
+    pub vault: Account<'info, TokenAccount>,
+
+    #[account(
+        mut,
+        constraint = user_token_account.owner == user.key(),
+        constraint = user_token_account.mint == market.load()?.collateral_mint
+    )]
+    pub user_token_account: Account<'info, TokenAccount>,
+
     #[account(mut)]
-    pub market: Account<'info, Market>,
-    /// CHECK: Validated inside `validate_oracle_account` helper with staleness checks
-    pub oracle: AccountInfo<'info>,
-    pub owner: Signer<'info>,
+    pub user: Signer<'info>,
+    pub token_program: Program<'info, Token>,
+    pub system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
 pub struct LiquidatePosition<'info> {
     #[account(mut)]
-    pub margin_account: AccountLoader<'info, MarginAccount>,
-    #[account(mut)]
-    pub market: Account<'info, Market>,
-    /// CHECK: Validated against oracle constraints
-    pub oracle: AccountInfo<'info>,
-    #[account(mut)]
+    pub market: AccountLoader<'info, MarketState>,
+
+    #[account(
+        mut,
+        seeds = [b"position", market.key().as_ref(), position.owner.as_ref()],
+        bump = position.bump
+    )]
+    pub position: Account<'info, PositionState>,
+
+    #[account(
+        mut,
+        seeds = [b"vault", market.key().as_ref()],
+        bump = market.load()?.vault_bump
+    )]
     pub vault: Account<'info, TokenAccount>,
-    #[account(mut)]
+
+    #[account(
+        mut,
+        constraint = liquidator_token_account.mint == market.load()?.collateral_mint
+    )]
     pub liquidator_token_account: Account<'info, TokenAccount>,
+
+    #[account(mut)]
     pub liquidator: Signer<'info>,
     pub token_program: Program<'info, Token>,
 }
 
 // -----------------------------------------------------------------------------
-// EVENTS & ERRORS
+// State Structs
 // -----------------------------------------------------------------------------
 
-#[event]
-pub struct CollateralDeposited {
-    pub user: Pubkey,
-    pub amount: u64,
-    pub total_collateral: u64,
+#[account(zero_copy)]
+#[derive(Default)]
+#[repr(C)]
+pub struct MarketState {
+    pub authority: Pubkey,
+    pub collateral_mint: Pubkey,
+    pub vault: Pubkey,
+    pub market_id: u64,
+    pub total_long_size: u64,
+    pub total_short_size: u64,
+    pub cumulative_funding_rate_long: i128,
+    pub cumulative_funding_rate_short: i128,
+    pub last_funding_slot: u64,
+    pub last_funding_rate: i64,
+    pub bump: u8,
+    pub vault_bump: u8,
+    pub _padding: [u8; 6],
 }
 
-#[event]
-pub struct PositionModified {
+#[account]
+#[derive(Default)]
+pub struct PositionState {
     pub owner: Pubkey,
-    pub market_index: u16,
-    pub size: i64,
-    pub execution_price: u64,
+    pub market: Pubkey,
+    pub size: u64,
+    pub collateral: u64,
+    pub entry_price: u64,
+    pub is_long: bool,
+    pub last_updated_slot: u64,
+    pub bump: u8,
 }
 
-#[event]
-pub struct PositionLiquidated {
-    pub liquidated_user: Pubkey,
-    pub liquidator: Pubkey,
-    pub market_index: u16,
-    pub liquidated_size: i64,
-    pub execution_price: u64,
-    pub fee_awarded: u64,
+impl PositionState {
+    pub const LEN: usize = 32 + 32 + 8 + 8 + 8 + 1 + 8 + 1;
 }
+
+// -----------------------------------------------------------------------------
+// Errors
+// -----------------------------------------------------------------------------
 
 #[error_code]
-pub enum AeonError {
-    #[msg("Zero deposit amount not permitted")]
-    ZeroDepositAmount,
-    #[msg("Numerical calculation overflow")]
-    NumericalOverflow,
-    #[msg("Zero position size modification")]
+pub enum AeonianError {
+    #[msg("Supplied oracle price is outside allowable slot latency.")]
+    StaleOraclePrice,
+    #[msg("Collateral amount cannot be zero.")]
+    ZeroCollateral,
+    #[msg("Position size cannot be zero.")]
     ZeroPositionSize,
-    #[msg("Execution price slipped past tolerance")]
-    SlippageExceeded,
-    #[msg("Position limits exceeded for margin account")]
-    MaxPositionsExceeded,
-    #[msg("Margin collateral is insufficient to cover maintenance")]
-    InsufficientFreeCollateral,
-    #[msg("Account margin is healthy; liquidation denied")]
-    AccountNotEligibleForLiquidation,
-    #[msg("No active position found on specified market")]
-    PositionNotFound,
-    #[msg("Supplied oracle account format is invalid")]
-    InvalidOracleAccount,
-    #[msg("Pyth price reported non-positive")]
-    InvalidOraclePrice,
-    #[msg("Oracle slot staleness exceeded acceptable limits")]
-    OracleStale,
+    #[msg("Requested position exceeds maximum allowed leverage.")]
+    ExcessiveLeverage,
+    #[msg("Collateral is insufficient to cover upfront fees.")]
+    InsufficientCollateralForFees,
+    #[msg("Arithmetic overflow or underflow occurred.")]
+    MathOverflow,
+    #[msg("Position is not eligible for liquidation.")]
+    PositionNotLiquidatable,
+    #[msg("Position is already closed.")]
+    PositionAlreadyClosed,
 }

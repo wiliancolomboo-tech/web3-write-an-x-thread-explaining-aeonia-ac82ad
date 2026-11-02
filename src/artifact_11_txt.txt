@@ -1,0 +1,7 @@
+9/14 🔴 ANNOUNCING: The Aeonian Protocol Deep-Dive & Live Architecture Series!
+
+We are hosting a 3-part interactive Livestream series directly with the core engineering team.
+
+Whether you're an on-chain Rust engineer, quantitative trader, or DeFi degen, this series will dissect every single line of code and trading strategy.
+
+Schedule & details below 👇

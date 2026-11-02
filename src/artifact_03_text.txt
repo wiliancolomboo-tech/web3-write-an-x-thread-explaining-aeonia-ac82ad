@@ -1,0 +1,74 @@
+════════════════════════════════════════════════════════════════════════════════
+X THREAD: UNPACKING AEONIAN TRADE ON SOLANA & THE UPCOMING LIVESTREAM ENGINE
+════════════════════════════════════════════════════════════════════════════════
+
+[TWEET 1: THE HOOK]
+High-frequency on-chain derivatives have long been hamstrung by latency, fragmented liquidity, and predatory EVM MEV. 
+
+Enter @AeonianTrade: an ultra-low latency, zero-price-impact perpetual exchange built natively on @solana. 
+
+Here is the deep architectural breakdown + Livestream reveal 🧵👇
+
+[TWEET 2: THE LATENCY PROBLEM SOLVED]
+Why does perpetual trading fail on EVM L2s?
+- Sequencer centralization
+- 10-60 second oracle lags
+- Slippage spikes on volatility
+
+Aeonian leverages Solana’s Sealevel runtime, processing parallel account mutations across 400ms slots. Trades execute concurrently without global state locks.
+
+[TWEET 3: THE ALP & ZERO SLIPPAGE ARCHITECTURE]
+Aeonian swaps the brittle order-book paradigm for an Oracle-anchored Liquidity Pool (ALP).
+
+Liquidity providers underwrite trades via a multi-asset index vault (USDC/SOL/BTC). Traders execute against ALP at absolute oracle truth, guaranteeing zero execution slippage under defined volume bounds.
+
+[TWEET 4: MATHEMATICALLY SOUND CONTINUOUS FUNDING]
+Traditional perps calculate funding discretely (e.g., 8-hour ticks), incentivizing toxic arbitrage right before the tick.
+
+Aeonian implements per-slot continuous funding accrual:
+F_slot = (OI_long - OI_short) / Total_Liquidity * Base_Velocity * dt
+
+Yield flows seamlessly into LP holders every 400ms.
+
+[TWEET 5: HIGH-FREQUENCY PYTH CPI INTEGRATION]
+Stale oracles cause protocol insolvencies. Aeonian directly cross-verifies @PythNetwork low-latency price streams via on-chain CPIs:
+✅ Price Confidence Interval Thresholding: σ / P <= 0.15%
+✅ Slot Staleness Limit: max_delay <= 3 slots (~1.2s)
+
+Exploitative front-running is dead on arrival.
+
+[TWEET 6: TWO-STEP ASYNCHRONOUS SETTLEMENT]
+To eliminate Sandwich attacks:
+1️⃣ Trader commits intent on-chain (Collateral locked, PDA initialized).
+2️⃣ Keeper CPI settles at Pyth feed oracle price in block t+1.
+
+Guarantees fair price distribution and programmatic MEV resistance.
+
+[TWEET 7: LIQUIDATION ENGINE AT MACHINE SPEED]
+When collateral ratios drop below 105% (Health Factor < 1.0), Aeonian doesn’t rely on manual keeper interventions.
+
+Decentralized Sealevel liquidators trigger atomic, non-blocking instruction batches that liquidate positions, disburse keeper rewards, and safeguard pool solvency in a single transaction.
+
+[TWEET 8: ANNOUNCING THE TECHNICAL LIVESTREAM SERIES]
+Want to look under the hood, audit our Rust code, and build high-frequency bots on Aeonian?
+
+We are launching the **Aeonian Masterclass Livestream Series**:
+📍 Platform: YouTube & X Spaces
+🎙️ Hosted by Core Protocol Engineers
+📅 Series kicks off: Thursday, March 20, 2026 @ 18:00 UTC
+
+[TWEET 9: LIVESTREAM CURRICULUM BREAKDOWN]
+What we're live-coding on stream:
+Ep 1: Deep Dive into Aeonian's Anchor State Machine & Account Layouts
+Ep 2: Pyth Core CPI Integration & Mitigating Low-Latency Exploits
+Ep 3: Writing, Benchmarking, and Running a High-Throughput Keeper Bot in Rust
+Ep 4: LP Delta-Neutral Hedging Strategies
+
+[TWEET 10: DEVELOPER & TRADER CALL TO ACTION]
+Whether you are a quant building sub-second algorithmic models or a Solana dev looking to master Anchor derivatives engineering, this series is for you.
+
+🔔 Set your reminders: [livestream_link]
+💻 GitHub & Docs: https://github.com/aeonian-trade/protocol
+💬 Join the Discord: https://discord.gg/aeonian
+
+Join us live and shape the future of Solana perps. 🚀 (10/10)

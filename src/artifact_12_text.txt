@@ -1,0 +1,6 @@
+10/14 🚨 ANNOUNCEMENT: We are pulling back the curtain on Aeonian Trade.
+
+Join our Core Engineering Team for a 2-part Technical Deep Dive Livestream series on YouTube & X Spaces!
+
+📅 Part 1: Architecture, Smart Contracts, & CU Benchmarks
+📅 Part 2: Live Stress-Testing, Keeper Cranks, & High-Leverage Execution

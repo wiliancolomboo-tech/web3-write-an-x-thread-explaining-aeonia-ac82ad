@@ -1,62 +1,56 @@
 flowchart TD
-    subgraph ClientLayer["User & Keeper Ingress"]
-        Trader["Trader / Front-end App"]
-        Keeper["Off-chain Keeper Bot (Rust)"]
-        JitoRelay["Jito Block Engine (MEV Protection)"]
+    subgraph Client_Layer ["Client & Market Operations"]
+        Trader["Trader / Arbitrageur"]
+        Keeper["Decentralized Keeper Bot"]
     end
 
-    subgraph ProgramBoundary["Aeonian Trade Core Protocol (Anchor Engine)"]
-        Dispatcher{"Instruction Dispatcher"}
-        
-        subgraph SecurityGuards["Security & Verification Layer"]
-            SignerCheck["Signer & Authority Check"]
-            OracleGuard["Oracle Guard (Pyth / Slot Staleness <= 3)"]
-            MathGuard["SafeMath Fixed-Point Engine (I80F48)"]
-            ReentrancyLock["PDA Mutex State Lock"]
+    subgraph External_Oracles ["External Oracle Infrastructure"]
+        Pyth["Pyth Network Price Feed<br/>(EMA / Confidence Interval)"]
+    end
+
+    subgraph Aeonian_Protocol ["Aeonian Trade Program (Anchor Core)"]
+        Router["Instruction Router<br/>[Anchor Program ID: Aeon111...]"]
+
+        subgraph Security_Guards ["Security & Pre-Flight Validation"]
+            SignerCheck["Signer & Authority Validation"]
+            StalenessCheck["Oracle Staleness & Conf Guard<br/>(ΔSlot < 5, Conf/P <= 0.1%)"]
+            ReentrancyGuard["Reentrancy & Vault Balance Locks"]
         end
 
-        subgraph CoreState["Program Derived Addresses (PDAs)"]
-            UserMargin["User Margin Account PDA\n['margin', user_pubkey]"]
-            MarketState["Market State PDA\n['market', market_index]"]
-            LiquidityPool["Liquidity Vault PDA\n['vault', mint_pubkey]"]
-            InsuranceFund["Insurance Fund PDA\n['insurance']"]
+        subgraph Core_PDAs ["Program Derived Accounts (PDAs)"]
+            PoolVault["AeonPool PDA<br/>[seeds = ['vault', mint]]<br/>Total Liquidity & Skew"]
+            PositionState["PositionState PDA (Zero-Copy)<br/>[seeds = ['position', user, market]]<br/>Collateral, Size, Entry, Direction"]
+            InsuranceFund["Insurance Fund PDA<br/>[seeds = ['insurance_fund']]<br/>Loss Absorption Reserve"]
         end
 
-        subgraph ExecutionEngine["Execution Engine"]
-            OpenClose["Position Routing & Open/Close"]
-            FundingCrank["Funding Rate Accrual Engine"]
-            Liquidator["Atomic Liquidation Subroutine"]
+        subgraph Execution_Engine ["Execution & Margin Settlement"]
+            MarginEngine["Margin & PnL Engine<br/>Effective Leverage & Maintenance Calc"]
+            LiquidationEngine["Liquidation Settlement Engine<br/>Keeper Bounty vs Insurance Split"]
         end
     end
 
-    subgraph ExternalPrograms["External Solana Ecosystem CPIs"]
-        TokenProgram["SPL Token / Token-2022 Program"]
-        PythOracle["Pyth Price Service (Push Oracle Account)"]
+    subgraph Solana_SPL ["Solana SPL Token Program"]
+        UserATA["User Collateral ATA"]
+        VaultATA["Aeonian Vault Collateral ATA"]
     end
 
-    %% Ingress
-    Trader -->|1. Submit Open / Close Order with Priority Fee| Dispatcher
-    Keeper -->|2. Trigger Liquidation / Funding Crank| JitoRelay
-    JitoRelay -->|3. Bundle Ingress| Dispatcher
+    %% Flow Paths
+    Trader -->|1. deposit_and_open_position| Router
+    Keeper -->|1. liquidate_position| Router
 
-    %% Internal routing & validation
-    Dispatcher --> SignerCheck
-    SignerCheck --> OracleGuard
-    OracleGuard -->|Assert Price, Slot Age & Confidence| PythOracle
-    OracleGuard --> ReentrancyLock
-    ReentrancyLock --> MathGuard
+    Router --> SignerCheck
+    SignerCheck --> StalenessCheck
+    Pyth -.->|Push/Pull Feed| StalenessCheck
+    StalenessCheck --> ReentrancyGuard
 
-    %% Execution pathways
-    MathGuard -->|Valid Order Parameters| OpenClose
-    MathGuard -->|Trigger Undercollateralized Position| Liquidator
-    MathGuard -->|Trigger Hourly Epoch Offset| FundingCrank
+    ReentrancyGuard --> MarginEngine
+    MarginEngine -->|Compute PnL & Skew| PoolVault
+    MarginEngine -->|Update Position Memory| PositionState
 
-    %% State manipulation
-    OpenClose -->|Zero-Copy Read/Write| UserMargin
-    OpenClose -->|Update Open Interest / Skew| MarketState
-    OpenClose -->|CPI Token Transfer| TokenProgram
-    TokenProgram -->|Deposit / Withdraw Vault Balance| LiquidityPool
+    ReentrancyGuard --> LiquidationEngine
+    LiquidationEngine -->|If Margin < MMR| PositionState
+    LiquidationEngine -->|Bounty Payout| UserATA
+    LiquidationEngine -->|Deficit/Surplus Adjustment| InsuranceFund
 
-    Liquidator -->|Transfer Seized Margin & Penalty| UserMargin
-    Liquidator -->|Distribute Liquidation Fee / Bounty| LiquidityPool
-    Liquidator -->|Offset Deficit if Underwater| InsuranceFund
+    MarginEngine -->|Token CPI: transfer_checked| Solana_SPL
+    UserATA <-->|Collateral In/Out| VaultATA

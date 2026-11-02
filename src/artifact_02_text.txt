@@ -1,0 +1,6 @@
+2/10 Most decentralized perpetuals suffer from the "Latency-Slippage Paradox":
+❌ Off-chain orderbooks introduce centralized sequencers.
+❌ AMMs introduce toxic LVR (Loss-Versus-Rebalancing) and front-running.
+❌ Pull oracles often fail during block congestion, triggering cascading liquidations.
+
+Aeonian solves this at the native SVM instruction level. 🔬

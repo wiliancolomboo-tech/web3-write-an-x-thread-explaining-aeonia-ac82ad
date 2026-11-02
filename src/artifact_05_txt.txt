@@ -1,0 +1,31 @@
+================================================================================
+TIME    | VISUAL                                | SPOKEN SCRIPT (VERBATIM NARRATIVE)
+================================================================================
+00:00 - | Fullscreen terminal showing Solana    | "Perpetual exchanges on L2s are broken by sequencer
+00:15   | test validator running at 400ms       | downtime and fragmented margin. Welcome to Aeonian Trade:
+        | blocktimes. Title overlay:            | the institutional, zero-impact perpetual protocol engineered
+        | "Aeonian Trade: Solana Speed Perps"   | directly on Solana's bare metal."
+
+00:15 - | Screen split: Anchor code (lib.rs)    | "At the core of Aeonian is an Anchor-native engine running
+00:35   | on left; Mermaid architecture diagram  | under 35,000 Compute Units. By utilizing Pyth Network 
+        | on right. Highlight confidence checks. | pull-oracles with strict confidence-interval gating, we 
+        |                                       | mathematically immunize traders against stale-feed toxic MEV."
+
+00:35 - | CLI terminal running `anchor test`.   | "Watch our test suite: in a single slot, the liquidation engine
+00:55   | Passing green checkmarks for market   | identifies insolvent positions, executes collateral liquidations,
+        | init, order open, and liquidation.   | and pays keeper bounties autonomously via PDA-signed CPIs.
+        |                                       | Zero socialized bad debt. Zero pool insolvency."
+
+00:55 - | Transition to Web browser displaying  | "But DeFi is nothing without active adoption. That’s why we are
+01:20   | the Aeonian Trading Terminal & the    | launching the Aeonian Technical Livestream Series: a bi-weekly,
+        | live-stream integration panel.        | interactive broadcast where viewers inspect our code in real-time
+        |                                       | and interact with on-chain trade signals via our dedicated PDAs."
+
+01:20 - | Close-up of Twitter / X Thread draft  | "We wrote an exhaustive 12-tweet deep-dive thread breaking down the
+01:40   | with graphics, math formulas, and     | math, the risk vault economics, and the livestream schedule,
+        | livestream dates.                     | ready to scale developer awareness and user onboarding."
+
+01:40 - | Display GitHub Repo, Clean Architecture| "With complete Anchor test suites, strict PDA security guards,
+02:00   | slide, and '1st Place' closing banner.| and an end-to-end community distribution funnel, Aeonian Trade
+        |                                       | is ready to deploy. Thank you."
+================================================================================

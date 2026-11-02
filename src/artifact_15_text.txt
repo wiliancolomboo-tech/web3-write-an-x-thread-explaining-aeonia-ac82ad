@@ -1,0 +1,5 @@
+13/14 Solana has proven that consumer-speed settlement is possible on-chain.
+
+Aeonian Trade leverages this execution environment to build institutional-grade derivatives that respect decentralization, self-custody, and sub-second settlement.
+
+The future of perp trading is here.

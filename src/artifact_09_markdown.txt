@@ -1,8 +1,4 @@
-8/10
-🎥 ANNOUNCING: The Aeonian Technical Livestream Series!
+6/ Compute Unit (CU) Efficiency:
+Through zero-copy account deserialization and zero runtime allocations, an `open_position` instruction runs in under 21,500 CUs!
 
-Join our lead core systems engineers over the next 3 weeks for live architecture tear-downs, live coding, and MEV benchmarking:
-
-📅 Stream 1: "Sub-50k CU Execution: Writing Zero-Copy Anchor Engines"
-• Date: Thursday, Nov 21 | 18:00 UTC
-• Deep dive into memory alignment, zero-copy safety, and fixed-point math.
+That means over 40+ atomic trades can pack into a single Solana block without hitting the 1.4M CU block limit. [7/14]

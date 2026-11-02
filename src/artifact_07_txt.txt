@@ -1,0 +1,67 @@
+========================================================================================
+[00:00 - 00:20] THE HOOK & THE PROBLEM
+========================================================================================
+VISUAL: 
+Fast-paced screen recording showing failed transactions, latency delays, and slippage 
+on EVM perps vs. ultra-slick sub-400ms trades settling on Aeonian Trade's Solana devnet.
+
+NARRATOR (PITCH):
+"Decentralized perpetuals are broken on legacy chains. High gas, multi-second latency, 
+and toxic MEV bots front-running user trades have crippled on-chain leverage. 
+Enter Aeonian Trade: The zero-price-impact perpetual exchange custom-engineered 
+for the Solana Virtual Machine."
+
+========================================================================================
+[00:20 - 00:50] ARCHITECTURE & PROTOCOL DEEP DIVE
+========================================================================================
+VISUAL: 
+Mermaid architectural diagram animating the flow from Pyth Network pull oracles, 
+through the Anchor Risk Engine, directly into the Unified ALP Vault PDA.
+
+NARRATOR:
+"Aeonian discards fragmented order books in favor of the unified ALP pool. 
+By pulling Pyth Network price feeds with strict confidence-interval boundaries 
+under 20 basis points, Aeonian executes up to 50x leverage with zero price impact 
+and under 42,000 Compute Units. Stale oracles and toxic front-running are mathematically 
+rejected at the SVM runtime level."
+
+========================================================================================
+[00:50 - 01:25] LIVE CODE & CRANK LIQUIDATION DEMO
+========================================================================================
+VISUAL: 
+Split screen. Left: Terminal running `anchor test` with green checks. 
+Right: Custom Rust keeper bot detecting an undercollateralized position, executing 
+`liquidate_position()`, and instantly receiving the 1.5% keeper bounty.
+
+NARRATOR:
+"Our liquidations are 100% decentralized. In this terminal, our open-source Rust keeper 
+monitors margin health in real-time. The moment an account drops below the 5% 
+maintenance margin, our keeper triggers an atomic liquidation, claiming the 1.5% 
+bounty while returning excess equity to the vault. Completely non-cascading. 
+Completely trustless."
+
+========================================================================================
+[01:25 - 01:45] THE COMMUNITY & LIVESTREAM ANNOUNCEMENT
+========================================================================================
+VISUAL: 
+Clean UI transition to the X Thread graphics and Livestream banner: 
+"Livestream Ep 1: SVM Perp Architecture" with calendar badges and links.
+
+NARRATOR:
+"To launch this revolutionary primitive, we’re hosting a two-part technical dev 
+livestream series. Episode 1 breaks down our Sealevel state architecture, and 
+Episode 2 walks developers through writing their own high-frequency Rust keeper bots 
+using Jito bundles."
+
+========================================================================================
+[01:45 - 02:00] THE CLOSE & WINNING PITCH
+========================================================================================
+VISUAL: 
+Aeonian Trade dashboard displaying $0 slippage trade execution, verified Anchor IDL, 
+and clear CTA links to GitHub and X.
+
+NARRATOR:
+"Aeonian Trade is not a toy prototype. It is a production-grade derivative engine 
+engineered for institutional capital on Solana. Check out our GitHub, read our 
+12-tweet deep dive on X, and join us live this Thursday. The future of perpetual 
+trading is Aeonian."

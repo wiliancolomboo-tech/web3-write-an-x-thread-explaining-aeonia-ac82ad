@@ -1,0 +1,56 @@
+================================================================================
+[00:00 - 00:20] HOOK & PROBLEM STATEMENT
+Visual: High-contrast terminal display running Solana TPS monitors, showing 
+        failed transactions and slippage losses on legacy AMMs during high volatility.
+Spoken (Voiceover):
+"Decentralized perpetuals on Solana are fast, but they aren't immune to toxic MEV, 
+slot front-running, and liquidation cascades during high volatility. When slot congestion 
+hits, discrete funding jumps and stale oracle reads drain liquidity providers and 
+revert liquidations. We built Aeonian Trade to solve this forever."
+================================================================================
+
+[00:20 - 00:50] ARCHITECTURAL BREAKTHROUGH (ZERO-COPY & STREAMING FUNDING)
+Visual: Split screen: Rust code on left showing Zero-Copy `AccountLoader` and 
+        checked Q64.64 math; right screen rendering the live Mermaid.js PDA 
+        interaction flow diagram.
+Spoken:
+"Aeonian introduces Delta-Neutral Streaming Liquidity directly at the Sealevel runtime 
+layer. Instead of hourly leaps, funding is continuously accrued on every slot. 
+By utilizing zero-copy deserialization and single-instruction Pull Oracle clamping 
+with Pyth, Aeonian slashes compute unit consumption to under thirty-thousand CU per trade. 
+Zero stale executions. Zero oracle front-running."
+================================================================================
+
+[00:50 - 01:25] LIVE DEMO (OPEN POSITION & SUB-SLOT LIQUIDATION)
+Visual: Terminal CLI executing `anchor test`. Split into browser showing Solana 
+        Explorer on localnet. We watch a $10,000 notional 10x long position open 
+        instantaneously, followed by an immediate simulated market shock triggering 
+        a sub-second keeper liquidation.
+Spoken:
+"Watch our automated test suite in real time. We initialize the isolated market vault, 
+open a ten-times leveraged long position, verify the deterministic collateral lock, 
+and inject a simulated black-swan price cascade. 
+Notice how our crank keeper detects the maintenance breach and performs a partial, 
+non-cascading liquidation in a single transaction slot—protecting liquidity and paying 
+the liquidator bounty without incurring protocol bad debt."
+================================================================================
+
+[01:25 - 01:45] THE COMMUNITY & LIVESTREAM ANNOUNCEMENT
+Visual: Polished UI graphic displaying the 3-part Livestream roadmap graphic with dates, 
+        agenda, and live code breakdown tags.
+Spoken:
+"To launch this technology, we’re hosting a comprehensive three-part technical 
+livestream series starting this Thursday. We’ll perform live code audits, demonstrate 
+how to build custom sub-millisecond Rust liquidation bots, and release our open-source 
+TypeScript SDK to the community."
+================================================================================
+
+[01:45 - 02:00] THE CLOSE & WINNING PITCH
+Visual: Full-screen display of GitHub repository, audit verification badges, 
+        and official X thread links.
+Spoken:
+"Aeonian Trade isn't just an interface; it's high-performance financial engineering 
+purpose-built for Solana's ultimate speed. Fully tested, mathematically secured, 
+and ready for production. Join the livestream, test our devnet, and let's scale 
+the next generation of DeFi together."
+================================================================================

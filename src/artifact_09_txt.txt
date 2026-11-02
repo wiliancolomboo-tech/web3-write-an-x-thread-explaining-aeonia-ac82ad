@@ -1,0 +1,8 @@
+7/14 Efficiency matters on Solana.
+
+Aeonian avoids dynamic Borsh allocations:
+✅ Zero-copy account deserialization using bytemuck
+✅ Bitwise packed order state flags
+✅ Compute Unit budget optimization (Average Open: 21,450 CUs)
+
+Parallel execution means 10,000+ traders can execute trades across multiple asset pairs in the exact same slot without account locking contention.

@@ -1,0 +1,18 @@
++---------------------------+-----------------------------------------------------------+-----------------------------------------------+
+| Attack Vector             | Vulnerability Classification                              | Aeonian Protocol Defensive Implementation     |
++---------------------------+-----------------------------------------------------------+-----------------------------------------------+
+| Oracle Frontrunning       | MEV Arbitrage on stale prices                             | Clamps price validity window to <= 400ms.      |
+|                           |                                                           | Checks confidence bounds: conf/price < 0.15% |
++---------------------------+-----------------------------------------------------------+-----------------------------------------------+
+| Reentrancy via CPI        | Malicious token fallback or cross-program invocation      | Solana run-to-completion prevents external    |
+|                           |                                                           | re-entry; account ownership check enforces SPL|
++---------------------------+-----------------------------------------------------------+-----------------------------------------------+
+| Account Substitution      | Attacker injects rogue Oracle or fake Vault               | Strict `has_one = oracle_feed` constraint +   |
+|                           |                                                           | seeds derivation checks on all state PDAs     |
++---------------------------+-----------------------------------------------------------+-----------------------------------------------+
+| Bad-Debt Insolvency       | Delayed liquidations in high-volatility crashes           | Keeper bounty split (60/40) incentivizes fast |
+|                           |                                                           | MEV execution; protocol Insurance Buffer      |
++---------------------------+-----------------------------------------------------------+-----------------------------------------------+
+| Arithmetic Over/Underflow | Unchecked integer math leading to arbitrary collateral    | Mandatory `.checked_mul()`, `.checked_add()`,|
+|                           | extraction                                                | and `.checked_div()` with custom Error Enums  |
++---------------------------+-----------------------------------------------------------+-----------------------------------------------+

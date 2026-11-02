@@ -1,10 +1,5 @@
-6/10
-📊 Benchmarking Aeonian vs Legacy Solana Perpetuals:
+4/ Let's look at the mathematical invariant governing margin health:
 
-Metric                  Legacy Engine       Aeonian Trade
-─────────────────────────────────────────────────────────
-Fill Transaction CU     ~240,000 CU         ~42,800 CU
-Max Parallel Trades     Sequential State    Parallel Accounts (Non-overlapping)
-Oracle Staleness Tol.   > 20 slots          ≤ 3 slots
-Collateral Haircuts     Static              Dynamic Curve based on depth
-Zero-Copy Loading       ❌ Deserialized      ✅ Zero-Copy (`bytemuck`)
+$$\text{Health Factor} = \frac{\text{Collateral} \pm \text{Unrealized PnL} - \text{Cumulative Borrow Fees}}{\text{Maintenance Margin Requirement}}$$
+
+If $\text{HF} < 1.0$, keepers trigger liquidations in sub-second cycles. No bad debt, no socialization of losses. [5/14]

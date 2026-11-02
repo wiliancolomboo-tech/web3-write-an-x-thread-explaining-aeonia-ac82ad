@@ -1,0 +1,72 @@
+flowchart TD
+    subgraph ClientLayer ["Client & Interface Layer"]
+        Trader["Trader / Copy-Trader"]
+        StreamHost["Livestream Host / Trader"]
+        KeeperBot["Liquidator / Arbitrage Keeper"]
+    end
+
+    subgraph SolanaRuntime ["Solana Sealevel Runtime"]
+        subgraph AeonianProgram ["Aeonian Core Program (Anchor)"]
+            Router["Order Router & Instruction Processor"]
+            RiskEngine["Risk Engine & Margin Verifier"]
+            StreamState["Streaming Session Manager"]
+            EventBus["Anchor Event Logger (EventEmitter)"]
+        end
+
+        subgraph PDAAccounts ["Program Derived Accounts (PDAs)"]
+            TradingSessionPDA["TradingSession PDA\n['session', host_pubkey, session_id]"]
+            MarginVaultPDA["MarginVault PDA\n['margin-vault', trader_pubkey]"]
+            PositionPDA["Position PDA\n['position', trader_pubkey, market_id]"]
+            ProtocolVault["Protocol Token Vault (SPL Token)"]
+        end
+
+        subgraph ExternalPrograms ["External Program Invocations (CPI)"]
+            PythProgram["Pyth Network Pull Oracle"]
+            TokenProgram["SPL Token Program / Token-2022"]
+        end
+    end
+
+    subgraph ObservabilityLayer ["Off-Chain Observability & Streaming"]
+        GeyserRPC["Solana Geyser Plugin / RPC WebSocket"]
+        StreamOverlay["Livestream Overlay Engine (OBS / WebRTC)"]
+        Viewers["Livestream Viewers / Copy-Execution Node"]
+    end
+
+    %% User Actions
+    Trader -->|1. Deposit Collateral| Router
+    StreamHost -->|2. Open Streaming Session & Trade| Router
+    KeeperBot -->|3. Evaluate Margin & Liquidate| Router
+
+    %% Core Logic Routing
+    Router --> RiskEngine
+    Router --> StreamState
+    
+    %% PDA Interactions
+    StreamState -->|Derives & Updates| TradingSessionPDA
+    RiskEngine -->|Validates Account Health| PositionPDA
+    RiskEngine -->|Validates Collateral| MarginVaultPDA
+
+    %% CPIs
+    RiskEngine -->|Cross-Program Invocation| PythProgram
+    RiskEngine -->|Transfer SPL Tokens| TokenProgram
+    TokenProgram -->|Debit/Credit| ProtocolVault
+
+    %% Events & Stream Pipeline
+    Router -->|Emit PositionChanged / StreamTradeEvent| EventBus
+    EventBus -.->|Raw Block Event Streaming| GeyserRPC
+    GeyserRPC -->|Fast WebSocket Ingestion| StreamOverlay
+    StreamOverlay -->|Real-time Overlays| Viewers
+    Viewers -.->|Copy Trades Triggered| Trader
+
+    %% Styling
+    classDef client fill:#1e1e2e,stroke:#89b4fa,stroke-width:2px,color:#cdd6f4;
+    classDef program fill:#181825,stroke:#f38ba8,stroke-width:2px,color:#cdd6f4;
+    classDef pda fill:#313244,stroke:#a6e3a1,stroke-width:2px,color:#cdd6f4;
+    classDef cpi fill:#45475a,stroke:#fab387,stroke-width:2px,color:#cdd6f4;
+    classDef obs fill:#11111b,stroke:#cba6f7,stroke-width:2px,color:#cdd6f4;
+
+    class Trader,StreamHost,KeeperBot client;
+    class Router,RiskEngine,StreamState,EventBus program;
+    class TradingSessionPDA,MarginVaultPDA,PositionPDA,ProtocolVault pda;
+    class PythProgram,TokenProgram cpi;
+    class GeyserRPC,StreamOverlay,Viewers obs;

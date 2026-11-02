@@ -1,7 +1,19 @@
-Traditional AMM / vAMM                 Aeonian Trade Architecture
-┌────────────────────────────────────┐   ┌────────────────────────────────────┐
-│ • High slippage on volatility      │   │ • Virtual Liquidity + Pyth Oracles │
-│ • High CU consumption (300k+ CU)   │   │ • Optimized Packed Structs (<45k)  │
-│ • Unpredictable gas/reverts        │   │ • Direct Keeper Routing + MEV-aware│
-│ • Fragmented margin accounts       │   │ • Unified Cross-Margin PDA Engine  │
-└────────────────────────────────────┘   └────────────────────────────────────┘
+┌──────────────────────────────────────┐
+                   │       Aeonian Liquidity Pool        │
+                   │        (ALP Multi-Asset Vault)       │
+                   └──────────────────┬───────────────────┘
+                                      │
+              ┌───────────────────────┼───────────────────────┐
+              ▼                       ▼                       ▼
+     ┌─────────────────┐    ┌──────────────────┐    ┌───────────────────┐
+     │   SOL Custody   │    │   USDC Custody   │    │   BTC Custody     │
+     │  Borrow Fee: r  │    │   Borrow Fee: r  │    │   Borrow Fee: r   │
+     └────────┬────────┘    └────────┬─────────┘    └─────────┬─────────┘
+              │                      │                        │
+              └──────────────────────┼────────────────────────┘
+                                     ▼
+                   ┌──────────────────────────────────────┐
+                   │ Dynamic Borrow Rate:                 │
+                   │ r_t = r_0 + U_t^k * (r_max - r_0)    │
+                   │ where U_t = Borrowed / Total Assets  │
+                   └──────────────────────────────────────┘

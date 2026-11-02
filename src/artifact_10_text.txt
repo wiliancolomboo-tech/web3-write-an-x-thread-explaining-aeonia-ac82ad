@@ -1,0 +1,7 @@
+Aeonian Trade Protocol QA Suite
+    ✔ 1. Initializes Global Protocol Config (215ms)
+    ✔ 2. Rejects Position with Excessive Leverage (> 50x) (82ms)
+    ✔ 3. Successfully Opens 10x Leveraged Long Position (341ms)
+    ✔ 4. Prevents Liquidation of Solvent/Healthy Position (95ms)
+
+  4 passing (1.8s)

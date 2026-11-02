@@ -1,0 +1,7 @@
+1/14 ⚡️ Most on-chain perps fail when Solana goes into overdrive.
+
+High latency, MEV sandwiching, oracle divergence, and toxic order flow drain liquidity providers when volatility spikes.
+
+Introducing @AeonianTrade: The next-generation zero-slippage perpetuals & yield synthetics protocol on Solana. 
+
+Here is how it works under the hood 🧵👇

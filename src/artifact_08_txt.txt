@@ -1,0 +1,27 @@
++-----------+----------------------------------------------+-----------------------------------------------------------+
+| Timestamp | Visual Layout                                | Voiceover (Spoken Word Audio Track)                       |
++-----------+----------------------------------------------+-----------------------------------------------------------+
+| 00:00 -   | Full-screen high-res architecture diagram;   | "Decentralized perpetuals on EVM rollups are broken by     |
+| 00:20     | zooming into Sealevel parallel pipelines and | latency and fragmented liquidity. Welcome to Aeonian      |
+|           | Pyth Network low-latency price feeds.        | Trade: Solana-native, zero-slippage perpetuals executing  |
+|           |                                              | at 400ms finality with per-slot continuous funding."      |
++-----------+----------------------------------------------+-----------------------------------------------------------+
+| 00:20 -   | Terminal: Fast execution of Anchor test      | "Let's inspect the code. Here, our Anchor program ingests |
+| 00:45     | suite; highlighting zero-copy oracle price   | low-latency Pyth oracles with sub-slot confidence         |
+|           | ingestion and mathematical skew accrual.     | thresholding. Notice how funding accrues per-slot rather  |
+|           |                                              | than in discrete 8-hour ticks, killing toxic arbitrage."  |
++-----------+----------------------------------------------+-----------------------------------------------------------+
+| 00:45 -   | Code editor: Side-by-side view of PDA seed   | "Security is strictly enforced. We utilize canonical PDA  |
+| 01:15     | derivation and checks-effects-interactions   | derivations, non-blocking asynchronous liquidations, and  |
+|           | pattern; CU metrics displayed in terminal.   | hard Compute Unit caps under 45,000 CU—making Aeonian     |
+|           |                                              | hyper-efficient even during extreme Solana congestion."   |
++-----------+----------------------------------------------+-----------------------------------------------------------+
+| 01:15 -   | Browser: Reveal of the upcoming Technical    | "To onboard developers, we're launching the Aeonian Dev   |
+| 01:40     | Livestream curriculum schedule, twitch/YT    | Livestreams. A four-part masterclass covering protocol    |
+|           | overlay, and open-source bot repository.     | internals, keeper bots, and delta-neutral vault strategies.|
+|           |                                              | We code live with the community, building open infra."    |
++-----------+----------------------------------------------+-----------------------------------------------------------+
+| 01:40 -   | Call to action screen: X thread handle,      | "Aeonian Trade combines world-class mechanical precision  |
+| 02:00     | GitHub repo URL, and final 1st place closing | with aggressive technical developer education. Check out  |
+|           | bumper.                                      | the thread, review our code, and join us on stream!"      |
++-----------+----------------------------------------------+-----------------------------------------------------------+

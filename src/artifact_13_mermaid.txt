@@ -1,0 +1,62 @@
+flowchart TD
+    subgraph ClientLayer ["Client & Ingestion Layer"]
+        Trader["Trader / Web3 UI / SDK Client"]
+        Keeper["Liquidator / Crank Keeper Bot"]
+        PythOracle["Pyth Network Pull Oracle Feed"]
+    end
+
+    subgraph ProgramSecurity ["Aeonian Program Security Boundary (Sealevel Engine)"]
+        InstructionRouter{"Instruction Router / Discriminator"}
+        
+        subgraph Validations ["Security & Guard Checks"]
+            SignerCheck["Signer & Auth Check (has_one)"]
+            ClockCheck["Slot Staleness Check (Clock / Oracle)"]
+            PDACheck["PDA Seed Derivation & Canonical Bump Validation"]
+            MathCheck["Fixed-Point Q64.64 Safety & Bound Asserts"]
+        end
+
+        subgraph CoreEngine ["State Transition Engines"]
+            PositionEngine["Position Engine (Open/Close/Modify)"]
+            FundingEngine["Linear Streaming Funding Accrual"]
+            LiquidationEngine["Liquidation & Partial Close Engine"]
+            FeeEngine["Dynamic Fee Splitter & Yield Streaming"]
+        end
+    end
+
+    subgraph StateLayer ["Deterministic On-Chain State (Solana Accounts)"]
+        GlobalMarket["Global Market Account PDA\n['market', mint]\nZero-Copy AccountLoader"]
+        UserPosition["User Position PDA\n['position', market, user]\nMargin, Size, EntryPrice, Direction"]
+        OraclePriceAccount["Pyth Price Update Account\nPrice, Confidence, Timestamp"]
+        InsuranceFund["Insurance Fund PDA\nBad Debt Absorb Buffer"]
+    end
+
+    subgraph TokenCustody ["SPL-Token Escrow Accounts"]
+        VaultCustody["Protocol Collateral Vault PDA\n['vault', market]"]
+        UserCollateral["User Collateral Token Account\n(Associated Token Account)"]
+        FeeReceiver["Fee Splitter Treasury Token Account"]
+    end
+
+    %% Flow connections
+    Trader -->|1. Submit Order / Position Instruction| InstructionRouter
+    Keeper -->|1b. Submit Liquidation Crank| InstructionRouter
+    PythOracle -->|Price Update Payload| InstructionRouter
+
+    InstructionRouter --> Validations
+    Validations --> SignerCheck
+    SignerCheck --> ClockCheck
+    ClockCheck --> PDACheck
+    PDACheck --> MathCheck
+
+    MathCheck --> CoreEngine
+    PositionEngine --> FundingEngine
+    FundingEngine --> StateLayer
+    LiquidationEngine --> StateLayer
+
+    CoreEngine -->|Read/Write State| GlobalMarket
+    CoreEngine -->|Mutate Position & Margin| UserPosition
+    CoreEngine -->|Verify Index Price| OraclePriceAccount
+
+    PositionEngine -->|2. CPI: spl_token::transfer Collateral| VaultCustody
+    LiquidationEngine -->|Deficit Coverage| InsuranceFund
+    FeeEngine -->|CPI: Protocol Cut| FeeReceiver
+    UserCollateral <-->|Deposit / Withdraw Margin| VaultCustody

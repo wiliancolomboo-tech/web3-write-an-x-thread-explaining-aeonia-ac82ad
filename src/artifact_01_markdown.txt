@@ -1,0 +1,107 @@
+🧵 1/11 | Decentralized perpetuals on Solana are undergoing a paradigm shift.
+
+High slippage, MEV latency extraction, and fragmented liquidity have capped DeFi perp adoption.
+
+Enter @AeonianTrade: A zero-price-impact, capital-efficient perp DEX built natively for Solana Sealevel.
+
+Here is the deep-dive ⚡️👇
+
+---
+
+🧵 2/11 | The Problem with Legacy Perp DEXs:
+Most L1/L2 perps rely on central limit order books (CLOBs) prone to off-chain sequencer downtimes or AMMs with high impermanent loss and slippage.
+
+Traders bleed capital through:
+• Latency arbitrage & toxic sandwiching
+• Capital-inefficient isolated margin vaults
+• Stale oracle front-running
+
+---
+
+🧵 3/11 | The Aeonian Architecture: Unified Multi-Asset Liquidity
+Instead of fragmented pairs, Aeonian utilizes an aggregated Liquidity Pool (ALP) backing synthetic positions.
+
+• Deposit: $SOL, $USDC, $LSTs
+• Earn: 70%+ protocol trading fees + borrow interest
+• Zero IL risk via delta-neutral protocol hedging mechanics
+
+---
+
+🧵 4/11 | Zero Price Impact & Dynamic Skew Pricing:
+Trades are settled against Pyth Low-Latency Oracles using atomic pull updates.
+
+PnL formula:
+ΔPnL = Size * (ExitPrice - EntryPrice) - DynamicBorrowFee(t) - SkewFee
+
+When Long/Short open interest deviates, the skew-rate increases to organically incentivize balancing arbitrageurs.
+
+---
+
+🧵 5/11 | Sub-400ms Execution & High-Frequency Risk Engine:
+Aeonian leverages Solana’s parallel transaction execution:
+⚡️ Compute budget optimization (~45,000 CU per market order)
+⚡️ Account-level locking (non-conflicting trades settle concurrently)
+⚡️ Liquidations execute in single-slot atomicity before bad debt accrues.
+
+---
+
+🧵 6/11 | Enterprise-Grade Security & Guardrails:
+• Staleness guards: Pyth confidence interval thresholds reject divergent ticks.
+• Reentrancy-free: Single-instruction state mutation via Anchor PDA constraints.
+• Flash loan protection: Margin balance evaluations require slot delta > 0 for settlement.
+
+---
+
+🧵 7/11 | Real-Yield Staking: $ALP
+Liquidity Providers mint $ALP by depositing supported assets.
+$ALP automatically accrues:
+📈 Liquidation penalties
+📈 Opening/Closing fees (10-80 bps)
+📈 Dynamic hourly borrow fees
+
+Backstopped by the Aeonian Insurance Fund to absorb extreme black-swan events.
+
+---
+
+🧵 8/11 | Developer & Quant Friendly:
+Aeonian isn't just a UI; it’s an open financial primitive.
+• TypeScript / Python SDKs for algorithmic trading bots
+• Low-latency Anchor IDL endpoints for liquidators & keepers
+• On-chain keeper bot bounties paying immediate SOL rewards per liquidation.
+
+---
+
+🧵 9/11 | 🚨 ANNOUNCING: The Aeonian Technical Livestream Series 🚨
+
+Ready to master the platform, audit the codebase, and execute high-alpha trading strategies?
+
+We are kicking off a 3-part interactive masterclass live on YouTube & X Spaces!
+
+Details below 👇
+
+---
+
+🧵 10/11 | 📅 Livestream Schedule:
+
+🔹 Ep. 1: "Architecting Solana Perps: Under the Hood of Aeonian"
+🗓️ Thursday, Oct 24 | 16:00 UTC
+Deep-dive into Anchor PDAs, Pyth Pull Oracles, and CU Optimization.
+
+🔹 Ep. 2: "Algorithmic Arbitrage & Keeper Bots"
+🗓️ Tuesday, Oct 29 | 17:00 UTC
+Live-coding an open-source Python keeper bot.
+
+🔹 Ep. 3: "Trading Masterclass: Delta-Neutral & Skew Farming"
+🗓️ Friday, Nov 1 | 15:00 UTC
+Live execution with top quant traders.
+
+---
+
+🧵 11/11 | Summary:
+Aeonian Trade is building the institutional backbone for on-chain derivatives on Solana.
+
+1. Follow @AeonianTrade & turn on 🔔
+2. Set reminders for the livestreams: [aeonian.trade/livestreams]
+3. Test our Devnet terminal & join the Discord: [discord.gg/aeonian]
+
+RT the first tweet to spread decentralized perps! 🔄🚀

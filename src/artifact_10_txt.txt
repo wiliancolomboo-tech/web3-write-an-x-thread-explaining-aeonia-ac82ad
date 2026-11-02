@@ -1,0 +1,8 @@
+8/14 Why is $ALP one of the most attractive delta-neutral yield engines on Solana?
+
+LPs are counterparty to traders. Historically on high-leverage perps:
+- 78% of retail leverage traders lose money over time
+- Borrow fees compound every minute
+- 100% of trading volume fees stream continuously to $ALP holders in USDC/SOL
+
+Auto-compounding, non-inflationary, real yield.

@@ -1,0 +1,6 @@
+11/14 What we’ll cover LIVE on stream:
+
+⚡ Live deployment of the Aeonian Core engine to Solana Testnet
+⚡ Cranking liquidations against simulated 50% flash crashes
+⚡ Explaining how to build low-latency keeper bots using Rust & TypeScript
+⚡ Open Q&A with the protocol founders

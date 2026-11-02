@@ -1,8 +1,7 @@
-10/10
-Ready to experience ultra-low latency, institution-grade perpetuals on Solana?
+8/ Keeper Economy:
+Anyone can run an Aeonian Keeper!
+Liquidators parse gRPC Geyser streams for accounts with $HF < 1.0$. 
 
-1. Follow @AeonianTrade & turn notifications 🔔 ON.
-2. Read our technical docs: https://docs.aeonian.trade
-3. Set your reminders for Livestream 1 this Thursday!
-
-Drop your questions below. The Aeonian core dev team is in the comments! 🚀⚡
+Liquidations return a dynamic fee reward:
+$$B = \min(\text{Fixed Fee} + \text{Base Liquidated} \times 2.5\%, \text{Max Reward})$$
+Keeping liquidations profitable even during micro-volatility. [9/14]

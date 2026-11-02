@@ -1,0 +1,11 @@
+10/14 🗓 MARK YOUR CALENDARS:
+
+📺 EPISODE 1: "Under the Hood of Sub-Slot Execution"
+- Sealevel parallel architecture
+- Pyth low-latency push integration
+- Live code walkthrough of the Anchor Program
+
+📺 EPISODE 2: "Quantitative Risk & Vault Architecture"
+- $ALP skew balancing math
+- Dynamic liquidation bots in Rust
+- Live stress-test simulation under 50% drawdown

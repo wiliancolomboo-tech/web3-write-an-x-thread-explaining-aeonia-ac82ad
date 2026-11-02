@@ -1,0 +1,75 @@
+flowchart TD
+    subgraph Clients["Client & Bot Layer"]
+        Trader["Trader / Web App"]
+        Keeper["Off-Chain Keeper / MEV Bot (Jito Bundle)"]
+        LP["Liquidity Provider (Depositor)"]
+    end
+
+    subgraph Program["Aeonian Protocol (Program ID: AeonTrade11111111111111111111111111111111111)"]
+        subgraph AuthGuards["Security & Context Guards"]
+            SignerCheck["Signer & Timestamp Verification"]
+            OracleCheck["Pyth Pull Oracle Integrity & Confidence Check"]
+            ReentrancyGuard["Reentrancy / State Re-lock Guard"]
+        end
+
+        subgraph InstructionRouter["Instruction Handlers"]
+            IxDeposit["deposit_liquidity()"]
+            IxOpen["open_position()"]
+            IxClose["close_position()"]
+            IxLiquidate["liquidate_position()"]
+        end
+
+        subgraph StatePDAs["Program Derived Accounts (Zero-Copy)"]
+            GlobalConfig["Global Config PDA<br/>[seed: 'config']"]
+            ALPVaultState["ALP Vault State PDA<br/>[seed: 'vault_state', pool_id]"]
+            MarketState["Market State PDA<br/>[seed: 'market', market_id]<br/>Tracks OI Long / Short & Cumulative Funding"]
+            TraderPosition["Position PDA<br/>[seed: 'position', user, market, pos_id]<br/>Entry Price, Collateral, Size, Direction"]
+        end
+
+        subgraph TokenVaults["SPL Token Vaults"]
+            VaultTokenAccount["ALP Collateral Custody ATA<br/>[seed: 'custody', token_mint]"]
+            InsuranceFund["Insurance Fund ATA"]
+        end
+    end
+
+    subgraph ExternalOracles["External Oracles"]
+        PythOracle["Pyth Network Receiver / Price Feed Account"]
+    end
+
+    subgraph SPLProgram["Solana SPL Token Program"]
+        TokenProgramCPI["SPL Token Program (transfer_checked)"]
+    end
+
+    %% Flow connections
+    Trader -->|"open_position(size, leverage)"| SignerCheck
+    LP -->|"deposit_liquidity(amount)"| SignerCheck
+    Keeper -->|"liquidate_position(target_pos)"| SignerCheck
+
+    SignerCheck --> ReentrancyGuard
+    ReentrancyGuard --> OracleCheck
+
+    PythOracle -.->|"Deserialize Price & Confidence"| OracleCheck
+
+    OracleCheck --> InstructionRouter
+
+    InstructionRouter -->|"Deposit"| IxDeposit
+    InstructionRouter -->|"Open"| IxOpen
+    InstructionRouter -->|"Close"| IxClose
+    InstructionRouter -->|"Liquidate"| IxLiquidate
+
+    IxDeposit -->|"Update LP shares & reserves"| ALPVaultState
+    IxDeposit -->|"CPI Transfer Collateral"| TokenProgramCPI
+    TokenProgramCPI -->|"Store Tokens"| VaultTokenAccount
+
+    IxOpen -->|"Read OI Skew & Funding"| MarketState
+    IxOpen -->|"Initialize / Mutate"| TraderPosition
+    IxOpen -->|"Lock Trader Margin"| TokenProgramCPI
+
+    IxClose -->|"Calculate PnL & Settle Fees"| MarketState
+    IxClose -->|"Close PDA / Return Remainder"| TraderPosition
+    IxClose -->|"Transfer PnL to Trader"| TokenProgramCPI
+
+    IxLiquidate -->|"Check Margin < MMR (2.5%)"| TraderPosition
+    IxLiquidate -->|"Debit Bad Debt / Distribute Rewards"| ALPVaultState
+    IxLiquidate -->|"Reward Keeper (60%)"| TokenProgramCPI
+    IxLiquidate -->|"Safety Yield to Reserve (40%)"| InsuranceFund

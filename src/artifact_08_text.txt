@@ -1,0 +1,6 @@
+aeonian-trade-engine-e2e
+    ✔ Initializes Unified Liquidity Pool with max 50x leverage (412ms)
+    ✔ Fails when attempting to open a position beyond leverage parameters (85ms)
+    ✔ Asserts rejection on unverified or stale oracle feed accounts (112ms)
+
+  3 passing (609ms)

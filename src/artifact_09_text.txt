@@ -1,0 +1,8 @@
+aeonian-trade-e2e-specs
+    ✔ Initializes an isolated market with verified PDAs (421ms)
+    ✔ Deposits collateral into the user position PDA (382ms)
+    ✔ Rejects position opening if Pyth oracle price is stale (128ms)
+    ✔ Successfully opens a leveraged long position with valid oracle data (395ms)
+    ✔ Executes Dutch auction liquidation when position drops below maintenance margin (412ms)
+
+  5 passing (2s)

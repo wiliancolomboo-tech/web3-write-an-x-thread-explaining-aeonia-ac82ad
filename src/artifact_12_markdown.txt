@@ -1,0 +1,2 @@
+9/ Developer-First Tooling:
+We are releasing our TypeScript SDK (`@aeonian-trade/sdk`) alongside direct Anchor IDLs:

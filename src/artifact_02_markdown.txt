@@ -1,6 +1,103 @@
 🧵 1/10
-Perpetuals on L1s are broken: toxic LVR, 300k+ Compute Unit transaction footprints, and oracle front-running.
+Slippage. Sandwich attacks. High-slippage market orders on illiquid pairs.
 
-We built @AeonianTrade on @Solana to rethink decentralized derivatives from the bare metal up.
+Solana traders lose millions to discrete MEV and liquidity fragmentation every month. 
 
-Here is the complete technical breakdown of our architecture + our upcoming Livestream schedule 👇
+Enter @AeonianTrade: A paradigm shift introducing Continuous Streaming Liquidity & TWAMM engines to Solana.
+
+Here is how it works 👇 ⚡
+
+---
+
+🧵 2/10
+Traditional DEX trades execute at a single discrete point in time:
+$100,000 swap -> instant pool displacement -> sandwich bot extracts 1.8% -> high slippage.
+
+Aeonian flips the script. Instead of 1 lumpy atomic swap, your trade is decomposed into continuous, infinitesimal micro-swaps across $N$ slots.
+
+Smooth fills. Minimized market impact. Zero sandwich surface.
+
+---
+
+🧵 3/10
+How does it run at Solana speed?
+Solana’s 400ms block time makes Continuous Virtual Orders computationally practical on L1.
+
+Aeonian uses a virtual balancing invariant:
+$Rate = \frac{\Delta In}{\Delta Slots}$
+
+Keepers crank the order pool iteratively. Every slot delta, tokens stream permissionlessly through concentrated liquidity pools.
+
+---
+
+🧵 4/10
+Under the Hood: The Anchor Architecture 🦀
+• StreamOrder PDA: Stores fixed-point execution rates, accumulator variables, and keeper bounties.
+• Zero-Copy Deserialization: Eliminates heap reallocation bottlenecks.
+• Sub-45k Compute Unit usage per crank call.
+• 100% non-custodial via program-derived addresses (PDAs).
+
+---
+
+🧵 5/10
+Why Keepers Love Aeonian ⚙️
+No centralized sequencer. Aeonian decentralizes fulfillment via a permissionless crank network.
+Keepers who crank orders receive an atomic protocol reward baked into the execution transaction.
+
+If you run a Jito searcher or Solana RPC node, you can run an Aeonian keeper bot out-of-the-box.
+
+---
+
+🧵 6/10
+Safety First: Hardened Against Flash Loans & Stale Oracles 🛡️
+Aeonian enforces:
+✅ Slot progression invariant: $\text{CurrentSlot} > \text{LastSlot}$
+✅ Pyth Network price sanity checks (max confidence interval caps)
+✅ Strict token account ownership checks preventing token-substitution attacks
+✅ Atomic reentrancy locks
+
+---
+
+🧵 7/10
+The Roadmap: What's next for Aeonian?
+1. Dynamic TWAMM Routing (Splitting streams across Whirlpools, Raydium, and Meteora)
+2. Streaming DCA with auto-compounding LP rewards
+3. Cross-program composability for DAOs liquidating treasuries with near-zero slippage.
+
+---
+
+🧵 8/10
+🚨 ANNOUNCING: THE AEONIAN DEEP-DIVE LIVESTREAM SERIES 🚨
+
+Want to see the code, run a keeper bot, and watch continuous TWAMM execution live on Devnet?
+
+Join our founding core engineers for an exclusive 2-part Technical Livestream series!
+
+🗓️ Livestream 1: Architecture & On-Chain Mechanics
+🗓️ Livestream 2: Setting up your High-Yield Keeper Bot
+
+---
+
+🧵 9/10
+Livestream Schedule & Agendas:
+📍 Session 1: "Streaming vs Discrete: The Math of Zero-Slippage Trading"
+• Deep dive into PDA states and CPI executions
+• Live Devnet TWAMM stress test
+• Q&A + Community Airdrop/Beta whitelist
+
+📍 Session 2: "Cranks, MEV & Arbitrage: Keeper Bot Masterclass"
+• Open-source bot setup
+• Maximizing tip/bounty returns on Jito-Solana
+
+---
+
+🧵 10/10
+The future of Solana execution is continuous, streaming, and MEV-resistant.
+
+Don’t trade into discrete slippage ever again.
+
+1. Retweet Tweet #1 🔁
+2. Set your livestream reminders here: [https://aeonian.trade/livestreams]
+3. Read the technical documentation & join the Discord: [https://docs.aeonian.trade]
+
+Let's stream value forever. 🌊

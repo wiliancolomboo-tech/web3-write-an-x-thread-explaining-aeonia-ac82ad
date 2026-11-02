@@ -1,0 +1,49 @@
+flowchart TD
+    subgraph ClientLayer ["Client & Bot Ecosystem"]
+        Trader["Trader / UI Interface"]
+        Keeper["Liquidator / Keeper Bot"]
+        OracleProvider["Pyth Price Service"]
+    end
+
+    subgraph ProgramCore ["Aeonian Trade Program (Anchor Core)"]
+        Router["Instruction Router"]
+        MarginEngine["Margin & Accounting Engine"]
+        vAMMEngine["Virtual AMM & Risk Engine"]
+        LiquidationGuard["Liquidation Guard"]
+        PythValidator["Pyth CPI Oracle Adapter"]
+    end
+
+    subgraph StateAccounts ["Solana Account State (PDAs)"]
+        MarketState["Market State PDA<br/>[b'market', market_id]"]
+        UserMargin["User Margin PDA<br/>[b'margin', market_id, user_pubkey]"]
+        PositionAccount["User Position PDA<br/>[b'position', market_id, user_pubkey]"]
+        VaultCollateral["Collateral Vault Token Account<br/>[b'vault', market_id]"]
+        InsuranceFund["Insurance Fund PDA<br/>[b'insurance', market_id]"]
+    end
+
+    subgraph ExternalPrograms ["Solana Native & External Programs"]
+        PythAccount["Pyth Price Account"]
+        TokenProgram["SPL Token Program"]
+    end
+
+    Trader -->|"1. DepositCollateral / OpenPosition"| Router
+    Keeper -->|"2. LiquidateUnhealthyPosition"| Router
+    OracleProvider -->|"Continuous Price Updates"| PythAccount
+
+    Router -->|"Verify & Parse"| MarginEngine
+    Router -->|"Execute Swap / Adjust Margin"| vAMMEngine
+    Router -->|"Trigger Liquidation"| LiquidationGuard
+
+    vAMMEngine -->|"Fetch Mark & Index Price"| PythValidator
+    PythValidator -->|"Validate Slot & Conf Interval"| PythAccount
+
+    MarginEngine -->|"Transfer Tokens"| TokenProgram
+    TokenProgram -->|"Custody Tokens"| VaultCollateral
+
+    MarginEngine -->|"Mutate Balance"| UserMargin
+    vAMMEngine -->|"Update Size & Entry Price"| PositionAccount
+    vAMMEngine -->|"Sync Reserves & Funding"| MarketState
+
+    LiquidationGuard -->|"Check Health Ratio (MR < MMR)"| PositionAccount
+    LiquidationGuard -->|"Bounty Payout"| TokenProgram
+    LiquidationGuard -->|"Deficit Cover"| InsuranceFund

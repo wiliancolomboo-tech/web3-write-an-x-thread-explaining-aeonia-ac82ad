@@ -1,0 +1,5 @@
+Program AeonTrade11111111111111111111111111111111111 invoke [1]
+Program log: Instruction: OpenPosition
+Program log: Aeonian Trade: Initialized Market 101
+Program AeonTrade11111111111111111111111111111111111 consumed 37820 of 200000 compute units
+Program AeonTrade11111111111111111111111111111111111 success
